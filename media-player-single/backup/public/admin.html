@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Playlist Admin Dashboard</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <style>
+    :root {
+      --primary-color: #004aad;
+      --accent-color: #00c897;
+      --accent-hover: #009b75;
+      --bg-color: #f3f6fa;
+      --text-color: #333;
+      --tile-bg: #fff;
+      --tile-shadow: rgba(0, 0, 0, 0.08);
+      --border-color: #ccc;
+      --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      --border-radius: 12px;
+      --transition-speed: 0.3s;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-family);
+      background: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    header {
+      background: var(--primary-color);
+      color: white;
+      padding: 1.25rem 2rem;
+      font-size: 1.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      user-select: none;
+    }
+
+    main.dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .tile {
+      background: var(--tile-bg);
+      padding: 2rem 1.75rem;
+      border-radius: var(--border-radius);
+      box-shadow: 0 6px 20px var(--tile-shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.2s ease, box-shadow var(--transition-speed);
+    }
+
+    .tile:hover,
+    .tile:focus-within {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px var(--tile-shadow);
+      outline: none;
+    }
+
+    .tile i {
+      font-size: 3rem;
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+      user-select: none;
+    }
+
+    .tile h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.4rem;
+      color: var(--primary-color);
+      text-align: center;
+    }
+
+    input[type="text"],
+    select,
+    input[type="file"] {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      margin-top: 1rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1.5px solid var(--border-color);
+      transition: border-color var(--transition-speed);
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    input[type="file"]:focus {
+      border-color: var(--accent-color);
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 1rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color var(--transition-speed);
+      user-select: none;
+    }
+
+    button:hover,
+    button:focus {
+      background-color: var(--accent-hover);
+      outline: none;
+    }
+
+    .tile.manage {
+      grid-column: span 2;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* Minimalistic playlist list style */
+    ul.playlist-list {
+      margin: 0.5rem 0 0 0;
+      padding: 0;
+      list-style: none;
+      width: 100%;
+      max-height: 320px;
+      overflow-y: auto;
+      border-radius: var(--border-radius);
+      background: #eef4fc;
+      box-shadow: inset 0 0 5px rgba(0, 74, 173, 0.1);
+      font-size: 0.9rem;
+      color: var(--primary-color);
+    }
+
+    li.playlist {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      user-select: none;
+    }
+
+    li.playlist:last-child {
+      border-bottom: none;
+    }
+
+    li.playlist span.name {
+      flex-grow: 1;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+
+    li.playlist span.name:focus {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+
+    div.actions {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    div.actions button {
+      background: var(--primary-color);
+      padding: 0.2rem 0.5rem;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      border: none;
+      transition: background-color var(--transition-speed);
+    }
+
+    div.actions button:hover,
+    div.actions button:focus {
+      background: #002d72;
+      outline: none;
+    }
+
+    /* Preview box */
+    #previewBox {
+      position: absolute;
+      background: var(--tile-bg);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 320px;
+      pointer-events: none;
+      display: none;
+      z-index: 1000;
+      font-size: 0.9rem;
+      color: var(--primary-color);
+      user-select: none;
+    }
+
+    /* Scrollbar for playlist list */
+    ul.playlist-list::-webkit-scrollbar {
+      width: 8px;
+    }
+    ul.playlist-list::-webkit-scrollbar-thumb {
+      background-color: var(--accent-color);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <i class="fas fa-music" aria-hidden="true"></i>
+    <span>Playlist Admin Dashboard</span>
+  </header>
+
+  <main class="dashboard" role="main" aria-label="Playlist management dashboard">
+    <section class="tile" aria-labelledby="createPlaylistLabel" tabindex="0">
+      <i class="fas fa-plus-circle" aria-hidden="true"></i>
+      <h2 id="createPlaylistLabel">Create Playlist</h2>
+      <input
+        type="text"
+        id="playlistName"
+        placeholder="Enter playlist name"
+        aria-describedby="createPlaylistDesc"
+      />
+      <button id="createBtn" type="button">Create</button>
+    </section>
+
+    <section class="tile" aria-labelledby="uploadFilesLabel" tabindex="0">
+      <i class="fas fa-upload" aria-hidden="true"></i>
+      <h2 id="uploadFilesLabel">Upload Files</h2>
+      <select id="uploadSelect" aria-label="Select playlist to upload files" aria-required="true"></select>
+      <input type="file" id="uploadFiles" multiple aria-label="Select files to upload" />
+      <button id="uploadBtn" type="button">Upload</button>
+    </section>
+
+    <!-- Minimalistic Manage Playlists Section -->
+    <section class="tile manage" aria-labelledby="managePlaylistsLabel" tabindex="0">
+      <i class="fas fa-list" aria-hidden="true"></i>
+      <h2 id="managePlaylistsLabel">Manage Playlists</h2>
+      <ul id="playlistList" class="playlist-list" role="list" aria-live="polite" aria-relevant="additions removals"></ul>
+    </section>
+  </main>
+
+  <!-- Preview box for hover -->
+  <div id="previewBox" role="tooltip" aria-hidden="true"></div>
+
+  <script>
+    const playlistList = document.getElementById('playlistList');
+    const uploadSelect = document.getElementById('uploadSelect');
+    const previewBox = document.getElementById('previewBox');
+    let previewTimeout;
+
+    // Fetch and render playlists
+    const fetchPlaylists = async () => {
+      try {
+        const res = await fetch('/api/playlists');
+        const playlists = await res.json();
+
+        if (playlists.length > 0 && playlists[0].createdAt) {
+          playlists.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        } else {
+          playlists.reverse();
+        }
+
+        playlistList.innerHTML = '';
+        uploadSelect.innerHTML = '';
+
+        playlists.forEach(({ name }) => {
+          const li = document.createElement('li');
+          li.className = 'playlist';
+
+          const span = document.createElement('span');
+          span.className = 'name';
+          span.tabIndex = 0;
+          span.textContent = name;
+          span.title = `Hover or focus to preview ${name}`;
+          span.addEventListener('mouseenter', e => showPreview(e, name));
+          span.addEventListener('mouseleave', hidePreview);
+          span.addEventListener('mousemove', movePreview);
+          span.addEventListener('focus', e => showPreview(e, name));
+          span.addEventListener('blur', hidePreview);
+
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+
+          const renameBtn = createActionButton('Rename', () => renamePlaylist(name));
+          const deleteBtn = createActionButton('Delete', () => deletePlaylist(name));
+          const triggerBtn = createActionButton('Trigger', () => triggerPlaylist(name));
+
+          actions.append(renameBtn, deleteBtn, triggerBtn);
+          li.append(span, actions);
+          playlistList.appendChild(li);
+
+          const option = document.createElement('option');
+          option.value = option.textContent = name;
+          uploadSelect.appendChild(option);
+        });
+
+        if (playlists.length) {
+          uploadSelect.value = playlists[0].name;
+        }
+      } catch (err) {
+        console.error('Error fetching playlists:', err);
+      }
+    };
+
+    const createActionButton = (text, onClick) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = text;
+      btn.addEventListener('click', onClick);
+      return btn;
+    };
+
+    // Create playlist
+    const createPlaylist = async () => {
+      const input = document.getElementById('playlistName');
+      const name = input.value.trim();
+      if (!name) {
+        alert('Please enter a playlist name.');
+        input.focus();
+        return;
+      }
+      try {
+        const res = await fetch('/api/playlists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+        });
+        if (!res.ok) throw new Error('Failed to create playlist');
+        input.value = '';
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to create playlist.');
+        console.error(err);
+      }
+    };
+
+    // Delete playlist
+    const deletePlaylist = async name => {
+      if (!confirm(`Are you sure you want to delete playlist "${name}"?`)) return;
+      try {
+        const res = await fetch(`/api/playlists/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete playlist');
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to delete playlist.');
+        console.error(err);
+      }
+    };
+
+    // Rename playlist
+    const renamePlaylist = async oldName => {
+      const newName = prompt('Enter new name for the playlist:', oldName);
+      if (!newName || newName === oldName) return;
+      try {
+        const res = await fetch(`/api/playlists/${encodeURIComponent(oldName)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newName }),
+        });
+        if (!res.ok) throw new Error('Failed to rename playlist');
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to rename playlist.');
+        console.error(err);
+      }
+    };
+
+    // Trigger playlist
+    const triggerPlaylist = async name => {
+      try {
+        const res = await fetch(`/api/playlists/${encodeURIComponent(name)}/trigger`, { method: 'POST' });
+        if (!res.ok) throw new Error('Failed to trigger playlist');
+        alert(`Playlist "${name}" triggered!`);
+      } catch (err) {
+        alert('Failed to trigger playlist.');
+        console.error(err);
+      }
+    };
+
+    // Upload files
+    const uploadFiles = async () => {
+      const playlist = uploadSelect.value;
+      const filesInput = document.getElementById('uploadFiles');
+      const files = filesInput.files;
+      if (!playlist) {
+        alert('Please select a playlist to upload files to.');
+        uploadSelect.focus();
+        return;
+      }
+      if (files.length === 0) {
+        alert('Please select files to upload.');
+        filesInput.focus();
+        return;
+      }
+
+      const formData = new FormData();
+      [...files].forEach(file => formData.append('files', file));
+
+      try {
+        const res = await fetch(`/api/playlists/${encodeURIComponent(playlist)}/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        if (!res.ok) throw new Error('Upload failed');
+        alert(`Uploaded ${files.length} file(s) to "${playlist}".`);
+        filesInput.value = ''; // clear files input
+      } catch (err) {
+        alert('Failed to upload files.');
+        console.error(err);
+      }
+    };
+
+    // Preview box functions
+    const showPreview = (event, playlistName) => {
+      clearTimeout(previewTimeout);
+      previewBox.style.display = 'block';
+      previewBox.textContent = `Loading preview for "${playlistName}"...`;
+
+      // Fake fetch preview content, replace with real API call if exists
+      setTimeout(() => {
+        previewBox.textContent = `Preview content for "${playlistName}" goes here.`;
+      }, 500);
+
+      movePreview(event);
+      previewBox.setAttribute('aria-hidden', 'false');
+    };
+
+    const movePreview = event => {
+      const padding = 12;
+      const box = previewBox.getBoundingClientRect();
+      let x = event.clientX + padding;
+      let y = event.clientY + padding;
+
+      // Prevent overflow right edge
+      if (x + box.width > window.innerWidth) {
+        x = event.clientX - box.width - padding;
+      }
+
+      // Prevent overflow bottom edge
+      if (y + box.height > window.innerHeight) {
+        y = event.clientY - box.height - padding;
+      }
+
+      previewBox.style.left = `${x}px`;
+      previewBox.style.top = `${y}px`;
+    };
+
+    const hidePreview = () => {
+      previewTimeout = setTimeout(() => {
+        previewBox.style.display = 'none';
+        previewBox.setAttribute('aria-hidden', 'true');
+      }, 300);
+    };
+
+    // Event listeners
+    document.getElementById('createBtn').addEventListener('click', createPlaylist);
+    document.getElementById('uploadBtn').addEventListener('click', uploadFiles);
+
+    // Fetch playlists initially
+    fetchPlaylists();
+  </script>
+</body>
+</html>

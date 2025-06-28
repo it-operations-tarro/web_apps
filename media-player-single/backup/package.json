@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "compression": "^1.8.0",
+    "express": "^5.1.0",
+    "multer": "^2.0.0",
+    "socket.io": "^4.8.1"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "name": "dual_message_board",
+  "version": "1.0.0",
+  "main": "server.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

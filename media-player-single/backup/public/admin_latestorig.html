@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Playlist Admin Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f3f6fa;
+      color: #333;
+    }
+
+    header {
+      background: #004aad;
+      color: white;
+      padding: 1.2rem 2rem;
+      font-size: 1.6rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    .tile {
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .tile:hover {
+      transform: translateY(-5px);
+    }
+
+    .tile i {
+      font-size: 2.5rem;
+      color: #00c897;
+      margin-bottom: 1rem;
+    }
+
+    .tile h3 {
+      margin: 0.5rem 0;
+      font-size: 1.2rem;
+      color: #004aad;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 1rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1.5px solid #ccc;
+    }
+
+    button {
+      background: #00c897;
+      border: none;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #009b75;
+    }
+
+    .playlist-list {
+      margin-top: 1rem;
+      width: 100%;
+      list-style: none;
+      padding: 0;
+    }
+
+    .playlist {
+      background: #eef4fc;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      margin-bottom: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .playlist span {
+      font-weight: bold;
+      color: #004aad;
+      cursor: pointer;
+    }
+
+    .playlist div button {
+      background: #004aad;
+      border: none;
+      color: white;
+      padding: 0.4rem 0.7rem;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      margin-left: 0.4rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .playlist div button:hover {
+      background: #002d72;
+    }
+
+    /* Preview box */
+    #previewBox {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 300px;
+      pointer-events: none;
+      display: none;
+      z-index: 1000;
+      font-size: 0.9rem;
+      color: #004aad;
+    }
+  </style>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+</head>
+<body>
+  <header>
+    🎵 Playlist Admin Dashboard
+  </header>
+
+  <div class="dashboard">
+    <div class="tile">
+      <i class="fas fa-plus-circle"></i>
+      <h3>Create Playlist</h3>
+      <input type="text" id="playlistName" placeholder="Playlist Name" />
+      <button onclick="createPlaylist()">Create</button>
+    </div>
+
+    <div class="tile">
+      <i class="fas fa-upload"></i>
+      <h3>Upload Files</h3>
+      <select id="uploadSelect"></select>
+      <input type="file" id="uploadFiles" multiple />
+      <button onclick="uploadFiles()">Upload</button>
+    </div>
+
+    <div class="tile" style="grid-column: span 2;">
+      <i class="fas fa-list"></i>
+      <h3>Manage Playlists</h3>
+      <ul id="playlistList" class="playlist-list"></ul>
+    </div>
+  </div>
+
+  <!-- Preview box for hover -->
+  <div id="previewBox"></div>
+
+  <script>
+    async function fetchPlaylists() {
+      try {
+        const res = await fetch('/api/playlists');
+        const playlists = await res.json();
+
+        // Sort playlists by createdAt descending if available, otherwise reverse
+        if (playlists.length > 0 && playlists[0].createdAt) {
+          playlists.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        } else {
+          playlists.reverse();
+        }
+
+        const list = document.getElementById('playlistList');
+        const select = document.getElementById('uploadSelect');
+        list.innerHTML = '';
+        select.innerHTML = '';
+
+        playlists.forEach(p => {
+          const li = document.createElement('li');
+          li.className = 'playlist';
+
+          li.innerHTML = `
+            <span 
+              onmouseenter="showPreview(event, '${p.name}')"
+              onmouseleave="hidePreview()"
+              onmousemove="movePreview(event)"
+              title="Hover to preview"
+            ><b>${p.name}</b></span>
+            <div>
+              <button onclick="renamePlaylist('${p.name}')">Rename</button>
+              <button onclick="deletePlaylist('${p.name}')">Delete</button>
+              <button onclick="triggerPlaylist('${p.name}')">Trigger</button>
+            </div>
+          `;
+          list.appendChild(li);
+
+          const opt = document.createElement('option');
+          opt.value = opt.textContent = p.name;
+          select.appendChild(opt);
+        });
+
+        // Set default selected playlist to the newest (first) playlist
+        if (playlists.length > 0) {
+          select.value = playlists[0].name;
+        }
+
+      } catch (err) {
+        console.error('Error fetching playlists:', err);
+      }
+    }
+
+    async function createPlaylist() {
+      const name = document.getElementById('playlistName').value.trim();
+      if (!name) {
+        alert('Please enter a playlist name.');
+        return;
+      }
+      try {
+        await fetch('/api/playlists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        document.getElementById('playlistName').value = '';
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to create playlist.');
+        console.error(err);
+      }
+    }
+
+    async function deletePlaylist(name) {
+      if (!confirm(`Are you sure you want to delete playlist "${name}"?`)) return;
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to delete playlist.');
+        console.error(err);
+      }
+    }
+
+    async function renamePlaylist(oldName) {
+      const newName = prompt('New name:', oldName);
+      if (!newName || newName === oldName) return;
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(oldName)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newName })
+        });
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to rename playlist.');
+        console.error(err);
+      }
+    }
+
+    async function triggerPlaylist(name) {
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(name)}/trigger`, { method: 'POST' });
+        alert(`Playlist "${name}" triggered!`);
+      } catch (err) {
+        alert('Failed to trigger playlist.');
+        console.error(err);
+      }
+    }
+
+    async function uploadFiles() {
+      const playlist = document.getElementById('uploadSelect').value;
+      const files = document.getElementById('uploadFiles').files;
+      if (!playlist) {
+        alert('Please select a playlist to upload files to.');
+        return;
+      }
+      if (files.length === 0) {
+        alert('Please select files to upload.');
+        return;
+      }
+      const formData = new FormData();
+      for (const file of files) formData.append('files', file);
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(playlist)}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        alert('Files uploaded successfully!');
+        document.getElementById('uploadFiles').value = '';
+      } catch (err) {
+        alert('Upload failed.');
+        console.error(err);
+      }
+    }
+
+    // Preview box logic
+    let previewTimeout;
+    async function showPreview(event, playlistName) {
+      clearTimeout(previewTimeout);
+      const box = document.getElementById('previewBox');
+      box.style.display = 'block';
+      box.style.left = (event.pageX + 15) + 'px';
+      box.style.top = (event.pageY + 15) + 'px';
+      box.textContent = 'Loading...';
+      try {
+        const res = await fetch(`/api/playlists/${encodeURIComponent(playlistName)}/preview`);
+        const data = await res.json();
+        if (data.files && data.files.length > 0) {
+          box.innerHTML = `<b>Playlist: ${playlistName}</b><ul>` +
+            data.files.map(f => `<li>${f}</li>`).join('') + '</ul>';
+        } else {
+          box.textContent = 'No files in playlist.';
+        }
+      } catch {
+        box.textContent = 'Failed to load preview.';
+      }
+    }
+
+    function movePreview(event) {
+      const box = document.getElementById('previewBox');
+      box.style.left = (event.pageX + 15) + 'px';
+      box.style.top = (event.pageY + 15) + 'px';
+    }
+
+    function hidePreview() {
+      const box = document.getElementById('previewBox');
+      previewTimeout = setTimeout(() => {
+        box.style.display = 'none';
+      }, 300);
+    }
+
+    // Initialize
+    fetchPlaylists();
+  </script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Your Service</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        /* General Body Styles */
+        body {
+            font-family: 'Inter', sans-serif; /* Modern, clean font from Google Fonts */
+            margin: 0;
+            padding: 0;
+            /* Enhanced background: subtle gradient for a softer look */
+            background: linear-gradient(135deg, #f0f2f5 0%, #e0e6ed 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Full viewport height */
+            color: #333; /* Darker text for readability */
+            overflow: hidden; /* Prevent scrollbars due to subtle background animation if added later */
+        }
+
+        /* Login Container */
+        .login-container {
+            background-color: #ffffff; /* White background for the form container */
+            padding: 40px;
+            border-radius: 16px; /* Slightly more rounded corners for a modern feel */
+            /* Enhanced shadow: deeper, softer shadow for better depth */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 420px; /* Slightly wider for a more spacious feel */
+            text-align: center;
+            transition: transform 0.3s ease-in-out; /* Smooth transition on hover/focus if implemented */
+        }
+
+        /* Hover effect for container (optional, but adds dynamism) */
+        .login-container:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Header Section */
+        .login-header {
+            margin-bottom: 35px; /* Increased margin for better separation */
+        }
+
+        .login-header .logo {
+            max-width: 120px; /* Slightly larger logo */
+            margin-bottom: 20px;
+            /* Optional: Add a subtle filter for modern look if an image logo is used */
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .login-header h2 { /* Changed from h1 to h2 to match original HTML structure */
+            font-size: 2.3em; /* Slightly larger, prominent heading */
+            color: #2c3e50; /* Darker blue-grey for heading */
+            margin-bottom: 12px;
+            font-weight: 700; /* Bolder for impact */
+            letter-spacing: -0.5px; /* Tighten letter spacing slightly */
+        }
+
+        .login-header p {
+            font-size: 1.05em; /* Slightly larger text for readability */
+            color: #7f8c8d; /* Muted grey for description */
+            line-height: 1.6; /* Increased line height for better readability */
+        }
+
+        /* Form Styling */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 25px; /* Increased space between input groups */
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group .icon {
+            position: absolute;
+            left: 18px; /* Slightly more left for better visual balance */
+            color: #95a5a6; /* Softer grey icon color */
+            font-size: 1.2em; /* Slightly larger icon */
+            transition: color 0.3s ease;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 16px 18px 16px 50px; /* Adjust padding for larger icon */
+            border: 1px solid #dcdcdc; /* Lighter border */
+            border-radius: 10px; /* More rounded input fields */
+            font-size: 1.05em; /* Slightly larger font */
+            color: #333;
+            outline: none; /* Remove default outline */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background-color: #fcfcfc; /* Very light background for inputs */
+        }
+
+        .input-group input::placeholder {
+            color: #b0b0b0; /* Lighter placeholder text */
+        }
+
+        .input-group input:focus {
+            border-color: #007bff; /* Accent color on focus */
+            box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.25); /* More prominent, but soft glow on focus */
+        }
+
+        .input-group input:focus + .icon { /* Change icon color on input focus */
+            color: #007bff;
+        }
+
+        /* Options Group (Now just Remember Me) */
+        .options-group {
+            display: flex;
+            justify-content: flex-start; /* Align checkbox to the left */
+            align-items: center;
+            font-size: 0.98em; /* Slightly larger font */
+            margin-bottom: 25px; /* Increased margin */
+            color: #555;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* More space between checkbox and label */
+        }
+
+        .remember-me input[type="checkbox"] {
+            accent-color: #007bff; /* Accent color for checkbox */
+            cursor: pointer;
+            width: 18px; /* Larger checkbox */
+            height: 18px;
+            border-radius: 4px; /* Slightly rounded checkbox */
+        }
+
+        .remember-me label {
+            cursor: pointer; /* Ensure label is clickable */
+        }
+
+        /* Login Button */
+        .login-button {
+            background: linear-gradient(180deg, #007bff 0%, #0056b3 100%); /* Gradient background for depth */
+            color: #ffffff;
+            padding: 16px 25px; /* More padding */
+            border: none;
+            border-radius: 10px; /* More rounded button */
+            font-size: 1.15em; /* Slightly larger font for button */
+            font-weight: 600; /* Bolder text */
+            cursor: pointer;
+            /* Enhanced transition for a more active feel */
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); /* Soft shadow for the button */
+            letter-spacing: 0.5px; /* Subtle letter spacing */
+            text-transform: uppercase; /* Uppercase for a more professional look */
+        }
+
+        .login-button:hover {
+            background: linear-gradient(180deg, #0056b3 0%, #007bff 100%); /* Invert gradient on hover */
+            transform: translateY(-3px); /* More pronounced lift effect */
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.45); /* Deeper shadow on hover */
+        }
+
+        .login-button:active {
+            transform: translateY(0); /* Press down effect on click */
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+        }
+
+        /* Error Message */
+        .error {
+            font-size: 0.95em;
+            font-weight: 500;
+            padding: 10px;
+            background-color: #ffebee; /* Light red background for errors */
+            border: 1px solid #ef9a9a; /* Red border */
+            border-radius: 8px;
+            margin-top: 15px !important; /* Ensure margin is applied */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 500px) {
+            .login-container {
+                margin: 20px;
+                padding: 30px 20px;
+                border-radius: 12px; /* Smaller radius for smaller screens */
+            }
+
+            .login-header h2 {
+                font-size: 1.9em;
+            }
+
+            .login-header p {
+                font-size: 0.95em;
+            }
+
+            .input-group input {
+                padding: 14px 15px 14px 45px;
+                font-size: 1em;
+            }
+
+            .input-group .icon {
+                left: 15px;
+                font-size: 1.1em;
+            }
+
+            .login-button {
+                padding: 14px 20px;
+                font-size: 1.05em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <!-- You can add an actual logo image here, e.g.: -->
+            <!-- <img src="https://placehold.co/100x100/A7A7A7/FFFFFF?text=Logo" alt="Logo" class="logo"> -->
+            <h2>Site Admin Login Page</h2>
+            <p>Welcome back! Please login to your account.</p>
+        </div>
+        <form class="login-form" action="/login" method="POST">
+            <div class="input-group">
+                <i class="fas fa-user icon"></i>
+                <input type="text" id="username" name="username" placeholder="Username" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock icon"></i>
+                <input type="password" id="password" name="password" placeholder="Password" required>
+            </div>
+            <div class="options-group">
+                <div class="remember-me">
+                    <input type="checkbox" id="rememberMe" name="rememberMe">
+                    <label for="rememberMe">Remember me</label>
+                </div>
+            </div>
+            <button type="submit" class="login-button">Login</button>
+            <p class="error" id="errorMessage" style="display:none; color: #dc3545; text-align: center; margin-top: 1rem;"></p>
+        </form>
+    </div>
+
+    <script>
+        // Simple client-side script to check for URL parameters (for error messages)
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error) {
+            const errorMessageElement = document.getElementById('errorMessage');
+            errorMessageElement.innerText = error;
+            errorMessageElement.style.display = 'block';
+        }
+    </script>
+     <script src="server_endpoints.js"></script>
+    <script>
+      // Use the URLs as needed
+      console.log("Redirecting to:", WebApps.dual_dashboard);
+      // window.location.href = WebApps.app2;
+    </script>
+</body>
+</html>

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="dualMessageBoardApp">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dual Message Board with Dashboard Selector</title>
+    <link rel="icon" href="data:," type="image/x-icon">
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      box-sizing: border-box;
+    }
+
+    iframe {
+      border: 1px solid #ffffff;
+      height: 100%;
+      box-sizing: border-box;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      display: block;
+      transition: box-shadow 0.3s ease; /* Smooth transition for highlighting */
+    }
+
+    .left-frame {
+      width: 50%;
+    }
+
+    .right-frame {
+      width: 50%;
+    }
+
+    #frameContainer iframe.single-frame {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    #msgOverlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.85);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      font-size: 36px;
+      color: darkgreen;
+      text-align: center;
+      width: 85vw;
+      max-width: 1200px;
+      user-select: none; /* Allow selection for messages */
+      z-index: 9999;
+      /* When sound is not enabled, the overlay should be clickable to enable it */
+      cursor: pointer;
+    }
+
+    #msgOverlay.sound-disabled {
+        pointer-events: auto; /* Make overlay clickable when sound is not enabled */
+        background: rgba(255, 200, 0, 0.85); /* Slightly different background to indicate action needed */
+        color: #333;
+        font-weight: bold;
+    }
+
+    #msgOverlay.sound-enabled {
+        pointer-events: none; /* Make overlay non-clickable when sound is enabled and showing a message */
+        background: rgba(255,255,255,0.85);
+        color: darkgreen;
+    }
+
+
+    #hamburgerBtn {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      width: 35px;
+      height: 30px;
+      cursor: pointer;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    #hamburgerBtn div {
+      height: 5px;
+      background-color: #333;
+      border-radius: 3px;
+      transition: all 0.3s ease;
+    }
+
+    #sidebarMenu {
+      position: fixed;
+      top: 0;
+      left: -250px;
+      width: 250px;
+      height: 100vh;
+      background: #222;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+      transition: left 0.3s ease;
+      z-index: 9999;
+      overflow-y: auto;
+    }
+
+    #sidebarMenu.active {
+      left: 0;
+    }
+
+    #sidebarMenu h2 {
+      margin-top: 0;
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    #sidebarMenu ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #sidebarMenu ul li {
+      margin-bottom: 12px;
+    }
+
+    #sidebarMenu ul li button {
+      width: 100%;
+      background: #444;
+      border: 1px solid #444; /* Add border for consistency */
+      color: white;
+      padding: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    #sidebarMenu ul li button:hover {
+      background: #666;
+    }
+    
+    /* New style for the selected dashboard button in the menu */
+    #sidebarMenu ul li button.selected-dashboard {
+        background: #3498db;
+        border-color: #2980b9;
+        font-weight: bold;
+    }
+
+  </style>
+</head>
+<body ng-controller="MainController">
+
+  <div id="hamburgerBtn" aria-label="Toggle dashboard menu" role="button" tabindex="0">
+    <div></div>
+    <div></div>
+    <div></div>
+  </div>
+
+  <nav id="sidebarMenu" aria-label="Dashboard selection menu">
+    <h2>View Mode</h2>
+
+    <label for="viewModeSelector" style="display:block; margin-bottom:10px;">Choose View:</label>
+    <select id="viewModeSelector" ng-model="viewMode" ng-change="changeViewMode()"
+            style="width: 100%; padding: 8px; margin-bottom: 15px; font-size: 14px;">
+      <option value="dual">🔀 Dual View</option>
+      <option value="single">🖥️ Single View</option>
+    </select>
+
+    <div id="dualViewMenus" ng-show="viewMode === 'dual'">
+      <strong>Left Frame:</strong>
+      <ul id="leftDashboardList">
+        <li><button ng-click="selectDashboard('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3005/viewer.html', 'left')" ng-class="{'selected-dashboard': isSelected('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3005/viewer.html', 'left')}">Media-Player</button></li>
+        <li><button ng-click="selectDashboard('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3002/time.html', 'left')" ng-class="{'selected-dashboard': isSelected('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3002/time.html', 'left')}">Time-Viewer</button></li>
+        <li><button ng-click="selectDashboard('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/viewer.html', 'left')" ng-class="{'selected-dashboard': isSelected('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/viewer.html', 'left')}">Queue Count - Message Board</button></li>
+        <li><button ng-click="selectDashboard('https://ph-api.letsdochinese.com/KJTCore/resources/agentcount.html', 'left')" ng-class="{'selected-dashboard': isSelected('https://ph-api.letsdochinese.com/KJTCore/resources/agentcount.html', 'left')}">Agent-Count</button></li>
+      </ul>
+
+      <strong>Right Frame:</strong>
+      <ul id="rightDashboardList">
+        <li><button ng-click="selectDashboard('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3005/viewer.html', 'right')" ng-class="{'selected-dashboard': isSelected('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3005/viewer.html', 'right')}">Media-Player</button></li>
+        <li><button ng-click="selectDashboard('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/viewer.html', 'right')" ng-class="{'selected-dashboard': isSelected('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/viewer.html', 'right')}">Queue Count - Message Board</button></li>
+        <li><button ng-click="selectDashboard('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3002/time.html', 'right')" ng-class="{'selected-dashboard': isSelected('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3002/time.html', 'right')}">Time-Viewer</button></li>
+        <li><button ng-click="selectDashboard('https://ph-api.letsdochinese.com/KJTCore/resources/agentcount.html', 'right')" ng-class="{'selected-dashboard': isSelected('https://ph-api.letsdochinese.com/KJTCore/resources/agentcount.html', 'right')}">Agent-Count</button></li>
+      </ul>
+    </div>
+
+    <div id="singleViewMenus" ng-show="viewMode === 'single'">
+      <strong>Single Frame View:</strong>
+      <ul id="singleDashboardList">
+        <li><button ng-click="selectDashboard('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/viewer.html', 'single')" ng-class="{'selected-dashboard': isSelected('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/viewer.html', 'single')}">Queue Count - Message Board</button></li>
+        <li><button ng-click="selectDashboard('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3002/time.html', 'single')" ng-class="{'selected-dashboard': isSelected('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3002/time.html', 'single')}">Time-Viewer</button></li>
+        <li><button ng-click="selectDashboard('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3004/viewer.html', 'single')" ng-class="{'selected-dashboard': isSelected('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3004/viewer.html', 'single')}">Media-Player</button></li>
+        <li><button ng-click="selectDashboard('https://ph-api.letsdochinese.com/KJTCore/resources/agentcount.html', 'single')" ng-class="{'selected-dashboard': isSelected('https://ph-api.letsdochinese.com/KJTCore/resources/agentcount.html', 'single')}">Agent-Count</button></li>
+        <li><button ng-click="selectDashboard('https://www.youtube.com/watch?v=rnXIjl_Rzy4', 'single')" ng-class="{'selected-dashboard': isSelected('https://www.youtube.com/watch?v=rnXIjl_Rzy4', 'single')}">NY Time's Square</button></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" id="frameContainer">
+    <iframe ng-if="viewMode === 'dual'" class="left-frame" id="leftFrame" ng-src="{{ leftFrameSrc }}" allow="autoplay"></iframe>
+    <iframe ng-if="viewMode === 'dual'" class="right-frame" id="rightFrame" ng-src="{{ rightFrameSrc }}" allow="autoplay"></iframe>
+    <iframe ng-if="viewMode === 'single'" class="left-frame single-frame" id="singleFrame" ng-src="{{ singleFrameSrc }}"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen></iframe>
+  </div>
+
+  <div id="msgOverlay"
+       ng-show="showMessageOverlay"
+       ng-class="{'sound-disabled': !isSoundEnabled, 'sound-enabled': isSoundEnabled}"
+       ng-click="!isSoundEnabled && enableSoundViaClick()">
+    {{ currentMessage }}
+  </div>
+  <audio id="msgSound" ng-src="{{ soundSrc }}" preload="auto"></audio>
+
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+  <script type="text/javascript" src="js/sockjs-1.0.0.min.js"></script>
+  <script type="text/javascript" src="js/stomp-2.3.4.min.js"></script>
+
+  <script>
+    angular.module('dualMessageBoardApp', [])
+      .controller('MainController', function($scope, $http, $interval, $window, $sce) {
+        // --- Frame Source Management ---
+        $scope.leftFrameSrc = $sce.trustAsResourceUrl('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3005/viewer.html');
+        $scope.rightFrameSrc = $sce.trustAsResourceUrl('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/viewer.html');
+        $scope.singleFrameSrc = $sce.trustAsResourceUrl('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/viewer.html'); // Default for single view
+        $scope.viewMode = 'dual'; // Default view mode
+
+        $scope.selectDashboard = function(url, frame) {
+          const trustedUrl = $sce.trustAsResourceUrl(url);
+          if (frame === 'left') {
+            $scope.leftFrameSrc = trustedUrl;
+          } else if (frame === 'right') {
+            $scope.rightFrameSrc = trustedUrl;
+          } else if (frame === 'single') {
+            $scope.singleFrameSrc = trustedUrl;
+          }
+        };
+        
+        // Helper function to check if a dashboard URL is selected for a specific frame
+        $scope.isSelected = function(url, frame) {
+            let currentSrc = '';
+            if (frame === 'left') {
+                currentSrc = $scope.leftFrameSrc;
+            } else if (frame === 'right') {
+                currentSrc = $scope.rightFrameSrc;
+            } else if (frame === 'single') {
+                currentSrc = $scope.singleFrameSrc;
+            }
+            // Use $$unwrapTrustedValue() to get the raw string for comparison
+            return $sce.getTrustedResourceUrl(currentSrc) === url;
+        };
+
+        $scope.changeViewMode = function() {
+          if ($scope.viewMode === 'dual') {
+            $scope.leftFrameSrc = $sce.trustAsResourceUrl('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3005/viewer.html');
+            $scope.rightFrameSrc = $sce.trustAsResourceUrl('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/viewer.html');
+          } else { // Single view
+            $scope.singleFrameSrc = $sce.trustAsResourceUrl('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/viewer.html');
+          }
+        };
+
+        // --- Message Overlay Logic ---
+        $scope.currentMessage = "";
+        $scope.showMessageOverlay = false;
+        $scope.soundSrc = $sce.trustAsResourceUrl('/sound.mp3');
+        let hideTimeout;
+        let lastMessage = "";
+
+        $scope.isSoundEnabled = false;
+        const SOUND_ENABLE_PROMPT = "Click anywhere to enable sound for messages";
+
+        const attemptSoundEnable = () => {
+            const sound = document.getElementById('msgSound');
+            if (sound) {
+                sound.muted = true;
+                sound.currentTime = 0;
+                sound.play().then(() => {
+                    $scope.$apply(() => {
+                        $scope.isSoundEnabled = true;
+                        sound.muted = false;
+                        if ($scope.currentMessage === SOUND_ENABLE_PROMPT) {
+                            $scope.showMessageOverlay = false;
+                            $scope.currentMessage = "";
+                        }
+                    });
+                    console.log("Main page sound enabled by user interaction.");
+                }).catch(err => {
+                    console.warn("Could not enable main page sound immediately:", err);
+                    $scope.$apply(() => {
+                        $scope.isSoundEnabled = false;
+                        $scope.currentMessage = SOUND_ENABLE_PROMPT;
+                        $scope.showMessageOverlay = true;
+                    });
+                });
+            }
+        };
+
+        $scope.enableSoundViaClick = function() {
+            if (!$scope.isSoundEnabled) {
+                attemptSoundEnable();
+            }
+        };
+
+        document.body.addEventListener('click', function bodyClickListener() {
+            if (!$scope.isSoundEnabled) {
+                attemptSoundEnable();
+            }
+        }, { once: true });
+
+        $scope.loadMessage = async function() {
+          try {
+            const res = await $http.get('/api/message');
+            const newMessage = res.data.message.trim();
+
+            if (newMessage.length > 0) {
+              if ($scope.isSoundEnabled && newMessage !== lastMessage) {
+                const sound = document.getElementById('msgSound');
+                if (sound) {
+                  sound.currentTime = 0;
+                  try {
+                    await sound.play();
+                    console.log("Playing message sound.");
+                  } catch (err) {
+                    console.warn('Main page sound playback failed (after enabled):', err);
+                    $scope.isSoundEnabled = false;
+                    $scope.$apply(() => {
+                        $scope.currentMessage = SOUND_ENABLE_PROMPT;
+                        $scope.showMessageOverlay = true;
+                    });
+                  }
+                }
+                lastMessage = newMessage;
+              } else if (!$scope.isSoundEnabled) {
+                $scope.currentMessage = SOUND_ENABLE_PROMPT;
+                lastMessage = "";
+              } else {
+                $scope.currentMessage = newMessage;
+              }
+
+              $scope.showMessageOverlay = true;
+
+              if (hideTimeout) clearTimeout(hideTimeout);
+              hideTimeout = setTimeout(() => {
+                $scope.$apply(function() {
+                  $scope.showMessageOverlay = false;
+                  $scope.currentMessage = "";
+                  lastMessage = "";
+                });
+              }, 10000);
+            } else {
+              $scope.currentMessage = "";
+              $scope.showMessageOverlay = false;
+              lastMessage = "";
+              if (hideTimeout) clearTimeout(hideTimeout);
+            }
+          } catch (err) {
+            console.error("Error fetching message:", err);
+            $scope.currentMessage = "Error loading message.";
+            $scope.showMessageOverlay = true;
+            if (hideTimeout) clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                $scope.$apply(() => {
+                    $scope.showMessageOverlay = false;
+                    $scope.currentMessage = "";
+                });
+            }, 5000);
+          }
+        };
+
+        // Initialize message loading and set up interval
+        $scope.loadMessage();
+
+        // --- FIX #1: Increased polling interval ---
+        const messageInterval = $interval($scope.loadMessage, 7000);
+
+        // --- FIX #2: Disabled auto-reloading frame ---
+        /*
+        const rightFrameReloadInterval = $interval(function() {
+          if ($scope.viewMode === 'dual') {
+            const rightFrame = document.getElementById('rightFrame');
+            if (rightFrame && rightFrame.contentWindow) {
+              const currentRightFrameSrc = $scope.rightFrameSrc;
+              let targetOrigin;
+              try {
+                const url = new URL($sce.getTrustedResourceUrl(currentRightFrameSrc));
+                targetOrigin = url.protocol + '//' + url.hostname + (url.port ? ':' + url.port : '');
+              } catch (e) {
+                console.warn("Could not parse rightFrameSrc for targetOrigin:", currentRightFrameSrc, e);
+                targetOrigin = '*';
+              }
+
+              if (targetOrigin) {
+                  console.log(`Sending 'reload' message to right frame at ${targetOrigin}.`);
+                  rightFrame.contentWindow.postMessage('reload', targetOrigin);
+              } else {
+                  console.warn("Could not determine targetOrigin for right frame, skipping reload message.");
+              }
+            }
+          }
+        }, 60000);
+        */
+
+        // --- Cleanup on Scope Destroy ---
+        $scope.$on('$destroy', function() {
+          $interval.cancel(messageInterval);
+          if (hideTimeout) clearTimeout(hideTimeout);
+        });
+      });
+
+    // --- Hamburger Toggle (kept in vanilla JS as it's purely DOM manipulation) ---
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const sidebarMenu = document.getElementById('sidebarMenu');
+
+    hamburgerBtn.addEventListener('click', () => {
+      sidebarMenu.classList.toggle('active');
+    });
+
+    window.addEventListener('click', (e) => {
+      if (!sidebarMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+        sidebarMenu.classList.remove('active');
+      }
+    });
+  </script>
+    <script src="server_endpoints.js"></script>
+    <script>
+      // Use the URLs as needed
+      console.log("Redirecting to:", WebApps.dual_dashboard);
+      // window.location.href = WebApps.app2;
+    </script>
+</body>
+</html>

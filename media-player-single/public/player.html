@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Viewer</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background: black;
+      overflow: hidden;
+    }
+
+    #playerContainer {
+      width: 100vw;
+      height: 100vh;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    video, audio, img, iframe {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      background: black;
+      display: block;
+      border: none;
+    }
+
+    audio {
+      width: 100%;
+      height: auto;
+    }
+
+    #startOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: black;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      cursor: default;
+      z-index: 9999;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="playerContainer"></div>
+
+  <div id="startOverlay">
+    Press any key to start playback
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const container = document.getElementById('playerContainer');
+    const overlay = document.getElementById('startOverlay');
+
+    let currentFiles = [];
+    let currentIndex = 0;
+    let currentPlaylist = null;
+    let userStarted = false;
+
+    overlay.style.display = 'flex';
+
+    async function enterFullscreen() {
+      const el = document.documentElement;
+      if (el.requestFullscreen) await el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+      else if (el.msRequestFullscreen) await el.msRequestFullscreen();
+    }
+
+    function startPlayback() {
+      if (!userStarted) {
+        userStarted = true;
+        overlay.style.display = 'none';
+        enterFullscreen();
+        if (currentFiles.length) playNext(currentPlaylist);
+      }
+    }
+
+    window.addEventListener('keydown', () => {
+      startPlayback();
+    }, { once: true });
+
+    socket.on('play', async (playlistName) => {
+      currentPlaylist = playlistName;
+      const res = await fetch(`/Media/${playlistName}/playlist.json`);
+      const data = await res.json();
+      currentFiles = data.files;
+      currentIndex = 0;
+
+      if (userStarted) {
+        playNext(playlistName);
+      } else {
+        overlay.style.display = 'flex';
+      }
+    });
+
+    function playNext(playlistName) {
+      if (currentFiles.length === 0) return;
+
+      const file = currentFiles[currentIndex];
+      const ext = file.split('.').pop().toLowerCase();
+      const mediaPath = `/Media/${playlistName}/${file}`;
+      container.innerHTML = ''; // Clear previous
+
+      if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) {
+        const video = document.createElement('video');
+        video.src = mediaPath;
+        video.controls = true;
+        video.autoplay = true;
+        video.loop = false;
+        video.muted = false;
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.onended = () => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext(playlistName);
+        };
+        container.appendChild(video);
+        video.play().catch(err => console.warn('Video play failed:', err));
+      } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+        const audio = document.createElement('audio');
+        audio.src = mediaPath;
+        audio.controls = true;
+        audio.autoplay = true;
+        audio.muted = false;
+        audio.onended = () => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext(playlistName);
+        };
+        container.appendChild(audio);
+        audio.play().catch(err => console.warn('Audio play failed:', err));
+      } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) {
+        const img = document.createElement('img');
+        img.src = mediaPath;
+        img.style.maxWidth = '100%';
+        img.style.maxHeight = '100%';
+        img.style.objectFit = 'contain';
+        container.appendChild(img);
+        setTimeout(() => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext(playlistName);
+        }, 5000); // show image for 5 seconds
+      } else if (ext === 'pdf') {
+        const iframe = document.createElement('iframe');
+        iframe.src = mediaPath;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        container.appendChild(iframe);
+        setTimeout(() => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext(playlistName);
+        }, 10000); // show PDF for 10 seconds
+      } else {
+        console.warn('Unsupported file:', file);
+        currentIndex = (currentIndex + 1) % currentFiles.length;
+        playNext(playlistName);
+      }
+    }
+  </script>
+      <script src="server_endpoints.js"></script>
+    <script>
+      // Use the URLs as needed
+      console.log("Redirecting to:", WebApps.media_single);
+      // window.location.href = WebApps.app2;
+    </script>
+</body>
+</html>

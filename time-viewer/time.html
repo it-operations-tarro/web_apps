@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PST & EST Time Viewer</title>
+  <style>
+    /* Basic styles */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: url('Tarro.png') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #ffffff;
+    }
+
+    /* Container for time cards */
+    .card-container {
+      display: flex;
+      flex-direction: row;
+      gap: 3vw;
+      padding: 2vw 4vw;
+      border-radius: 40px;
+      backdrop-filter: blur(20px);
+      max-width: 90vw;
+      box-sizing: border-box;
+    }
+
+    /* Time display cards */
+    .time-card {
+      flex: 1 1 0; /* Allow cards to grow and shrink equally */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4vw 6vw;
+      background: rgba(30, 30, 30, 0.8);
+      border-radius: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s ease;
+      min-width: 0; /* override default */
+      box-sizing: border-box;
+    }
+
+    .time-card:hover {
+      transform: scale(1.05);
+    }
+
+    /* Labels and time */
+    .label {
+      font-size: clamp(1.5rem, 2.5vw, 2.5rem);
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      text-shadow: 2px 2px 5px #000;
+      text-align: center;
+    }
+
+    .time {
+      font-size: clamp(2.5rem, 4vw, 4.2rem);
+      font-weight: bold;
+      text-shadow: 3px 3px 8px #000;
+      white-space: nowrap;
+    }
+
+    /* Responsive for small screens */
+    @media (max-width: 768px) {
+      .card-container {
+        flex-direction: column;
+        gap: 2rem;
+        padding: 2rem;
+        max-width: 95vw;
+      }
+
+      .time-card {
+        padding: 3rem 4rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .time-card {
+        padding: 2rem 2rem;
+      }
+
+      .label {
+        font-size: 1.3rem;
+      }
+
+      .time {
+        font-size: 2.5rem;
+      }
+    }
+
+    .footer-text {
+      position: fixed;
+      bottom: 15px;
+      right: 20px;
+      font-size: 1rem;
+      color: #000;
+      font-style: italic;
+      text-shadow: 1px 1px 3px #000;
+    }
+  </style>
+</head>
+<body>
+  <div class="card-container">
+    <div class="time-card">
+      <div class="label">🇵🇭 Philippine Time (PST)</div>
+      <div id="phil-time" class="time">--:--:--</div>
+    </div>
+    <div class="time-card">
+      <div class="label">🇺🇸 Eastern Time (EST)</div>
+      <div id="est-time" class="time">--:--:--</div>
+    </div>
+  </div>
+
+  <script>
+    function updateTime() {
+      const now = new Date();
+
+      const philTime = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Manila',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      }).format(now);
+
+      const estTime = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      }).format(now);
+
+      document.getElementById('phil-time').textContent = philTime;
+      document.getElementById('est-time').textContent = estTime;
+    }
+
+    setInterval(updateTime, 1000);
+    updateTime();
+  </script>
+  <div class="footer-text">&reg;Powered by IT Support DGT</div>
+
+  <script src="server_endpoints.js"></script>
+    <script>
+      // Use the URLs as needed
+      console.log("Redirecting to:", WebApps.time);
+      // window.location.href = WebApps.app2;
+    </script>
+</body>
+</html>

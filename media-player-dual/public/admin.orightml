@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>General File Uploader Dashboard</title>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+    />
+	<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  crossorigin="anonymous"
+/>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Professional & Structured Vibe - Root Variables */
+:root {
+    --bg-color: #f5f8fa; /* Light, cool gray background */
+    --surface-color: #ffffff; /* Pure white for cards/modals */
+    --text-color-primary: #212529; /* Dark, almost black for main text */
+    --text-color-secondary: #6c757d; /* Muted gray for secondary text */
+    --primary-color: #0056b3; /* Deep, authoritative blue */
+    --primary-hover: #004085; /* Darker blue on hover */
+    --accent-color: #e62117; /* YouTube Red (keeping for theme, adjust if desired) */
+    --accent-hover: #c41e15; /* Darker YouTube Red on hover */
+    --border-color: #dee2e6; /* Light gray border for definition */
+    --shadow-light: rgba(0, 0, 0, 0.07);
+    --shadow-medium: rgba(0, 0, 0, 0.15);
+    --font-family: 'Roboto', sans-serif; /* NEW FONT */
+    --border-radius: 6px; /* Slightly sharper corners */
+    --transition-duration: 0.2s; /* Consistent transition duration */
+    --transition-easing: ease-in-out; /* Smooth easing for transitions */
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-family);
+    background: var(--bg-color);
+    color: var(--text-color-primary);
+    line-height: 1.6; /* Slightly increased line height for readability */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+header {
+    background: var(--primary-color); /* Changed to primary blue for general dashboard */
+    color: white;
+    padding: 1.25rem 2rem;
+    font-size: 1.8rem; /* Slightly larger header font */
+    font-weight: 500; /* Less bold header font */
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Increased gap in header */
+    user-select: none;
+    box-shadow: 0 4px 10px var(--shadow-medium); /* Stronger header shadow */
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    transition: background var(--transition-duration) var(--transition-easing);
+}
+
+header i {
+    color: white;
+    font-size: 2rem; /* Larger icon in header */
+}
+
+main.dashboard {
+    display: grid;
+    /* Forces two columns on wider screens, but only one column for the main content */
+    grid-template-columns: 1fr; /* Changed to a single column as all primary actions are now in one tile */
+    gap: 1rem; /* Consistent gap between tiles */
+    padding: 1.5rem; /* Consistent padding around the dashboard */
+    max-width: 990px; /* Wider content area */
+    margin: 1.5rem auto; /* Centers the dashboard with more vertical margin */
+
+    /* Responsive adjustment for small screens */
+    @media (max-width: 600px) { /* Adjust breakpoint as needed */
+        grid-template-columns: 1fr; /* Single column layout for small screens */
+    }
+}
+
+.tile {
+    background: var(--surface-color);
+    padding: 1.5rem; /* Consistent padding for tiles */
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px var(--shadow-light); /* Clear, defined shadow */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid var(--border-color); /* Visible border for structure */
+    transition: transform var(--transition-duration) var(--transition-easing),
+                box-shadow var(--transition-duration) var(--transition-easing);
+}
+
+.tile:hover,
+.tile:focus-within {
+    transform: translateY(-4px); /* Subtle lift */
+    box-shadow: 0 8px 20px var(--shadow-medium);
+    outline: none;
+}
+
+.tile i {
+    font-size: 3rem; /* Larger icons for presence */
+    color: var(--primary-color); /* Icons match primary color */
+    margin-bottom: 1rem; /* Spacing below icon */
+    user-select: none;
+    transition: transform var(--transition-duration) var(--transition-easing),
+                color var(--transition-duration) var(--transition-easing);
+}
+
+.tile:hover > i,
+.tile:focus-within > i {
+    transform: scale(1.05); /* Slight scale on icon */
+    color: var(--accent-color); /* Icon changes to accent on hover */
+}
+
+.tile h2 {
+    margin: 0 0 1rem 0; /* Spacing below heading */
+    font-size: 1.4rem; /* Clear heading size */
+    color: var(--text-color-primary);
+    text-align: center;
+    font-weight: 500; /* Medium font weight for headings */
+}
+
+input[type="text"],
+textarea, /* Added textarea */
+select,
+input[type="file"] {
+    width: 100%;
+    padding: 0.75rem 1rem; /* Consistent padding for inputs */
+    margin-top: 1rem; /* Spacing above inputs */
+    font-size: 0.95rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color); /* Clear border for inputs */
+    background-color: var(--surface-color); /* Input background matches cards */
+    color: var(--text-color-primary);
+    transition: border-color var(--transition-duration) var(--transition-easing),
+                box-shadow var(--transition-duration) var(--transition-easing);
+}
+
+textarea {
+    resize: vertical; /* Allow vertical resizing */
+    min-height: 80px; /* Minimum height for description */
+}
+
+input[type="text"]:focus,
+textarea:focus, /* Added textarea */
+select:focus,
+input[type="file"]:focus {
+    border-color: var(--primary-color); /* Clear blue focus ring */
+    box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.2);
+    outline: none;
+}
+
+button {
+    width: 100%;
+    padding: 0.85rem 0; /* Consistent padding for buttons */
+    font-size: 1rem;
+    font-weight: 500;
+    color: white;
+    background-color: var(--primary-color); /* Default button color */
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                transform var(--transition-duration) var(--transition-easing),
+                box-shadow var(--transition-duration) var(--transition-easing);
+    user-select: none;
+    margin-top: 1.2rem; /* Spacing above buttons */
+    box-shadow: 0 2px 8px rgba(0, 86, 179, 0.2); /* Shadow matching primary */
+}
+
+button:hover,
+button:focus {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 86, 179, 0.3);
+    outline: none;
+}
+
+/* Action Icon Buttons - Primary Actions (Create Playlist, Upload Files tiles) */
+/* This specific styling is now less relevant as these actions are regular buttons */
+.action-icon-button {
+    background: var(--primary-color);
+    border: none;
+    border-radius: var(--border-radius);
+    width: 100%;
+    height: 100%; /* Important for fill in the flex container */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                transform var(--transition-duration) var(--transition-easing),
+                box-shadow var(--transition-duration) var(--transition-easing);
+    font-size: 1.6rem;
+    box-shadow: 0 6px 15px rgba(0, 86, 179, 0.2);
+}
+
+.action-icon-button:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-6px); /* Still want the lift effect */
+    box-shadow: 0 10px 25px rgba(0, 86, 179, 0.3);
+}
+
+.action-icon-button i {
+    font-size: 2.5rem; /* Slightly smaller for inline with text */
+    margin-bottom: 0.5rem; /* Adjust spacing */
+    color: white;
+}
+
+.action-icon-button span {
+    font-size: 1rem; /* Adjust font size */
+    font-weight: 500;
+}
+
+
+/* Manage Playlists Tile Specifics */
+.tile.manage {
+    grid-column: span 1; /* Now it's the only main tile, so it spans 1 column */
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: relative;
+
+    /* Responsive adjustment for small screens */
+    @media (max-width: 600px) {
+        grid-column: span 1; /* Single column on small screens */
+    }
+}
+
+.tile.manage h2 {
+    margin: 0 0 1rem 0; /* Spacing below h2 in manage tile */
+    display: flex; /* Allows action buttons to be on same line as heading */
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.tile.manage > i {
+    margin-bottom: 1rem;
+    margin-top: 0;
+    color: var(--primary-color); /* Keep primary color for list icon */
+}
+
+/* Container for all top-level action buttons (rename, delete, create, upload) */
+.manage .top-action-buttons-wrapper {
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap to next line if space is tight */
+    gap: 0.75rem; /* Space between buttons */
+    margin-left: auto; /* Push buttons to the right */
+    margin-bottom: 0.8rem;
+    align-items: center;
+    justify-content: flex-end; /* Align items to the end (right) */
+    width: 100%; /* Ensure it takes full width within its parent */
+}
+
+.manage .top-action-buttons-wrapper button {
+    width: auto; /* Allow width to adjust to text */
+    height: 36px;
+    padding: 0 12px; /* Add horizontal padding */
+    background: var(--primary-color);
+    border-radius: var(--border-radius); /* Use consistent border-radius */
+    font-size: 0.9rem; /* Adjust font size for text */
+    display: inline-flex; /* Use inline-flex to keep them in a row */
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    margin-top: 0; /* Override default button margin */
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                transform var(--transition-duration) var(--transition-easing),
+                box-shadow var(--transition-duration) var(--transition-easing);
+    flex-shrink: 0; /* Prevent shrinking too much */
+}
+
+.manage .top-action-buttons-wrapper button i {
+    font-size: 1rem; /* Adjust icon size within button */
+    margin-right: 5px; /* Space between icon and text */
+    margin-bottom: 0; /* Remove default icon margin */
+    color: white; /* Ensure icons are white */
+}
+
+.manage .top-action-buttons-wrapper button:hover:not(:disabled) {
+    background: var(--primary-hover);
+    transform: scale(1.05); /* Slightly less aggressive scale for buttons with text */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.manage .top-action-buttons-wrapper button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: none;
+}
+
+
+/* Playlist List Styling */
+ul.playlist-list {
+    margin: 1rem 0 0 0; /* Spacing above the list */
+    padding: 0;
+    list-style: none;
+    width: 100%;
+    max-height: 300px; /* Fixed height for scrollable list */
+    overflow-y: auto;
+    border-radius: var(--border-radius);
+    background: var(--bg-color); /* List background uses the lighter background color */
+    border: 1px solid var(--border-color);
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+    font-size: 0.95rem;
+    color: var(--text-color-primary);
+}
+
+li.playlist {
+    display: flex;
+    align-items: center;
+    padding: 0.7rem 0.9rem; /* Consistent padding for list items */
+    border-bottom: 1px solid var(--border-color);
+    user-select: none;
+    background-color: transparent;
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                transform var(--transition-duration) var(--transition-easing),
+                box-shadow var(--transition-duration) var(--transition-easing);
+    gap: 0.7rem; /* Spacing between elements in list item */
+    position: relative;
+    z-index: 1;
+}
+
+li.playlist:last-child {
+    border-bottom: none;
+}
+
+li.playlist:hover:not(.selected) {
+    background-color: #e9f0f5; /* Light hover background */
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+li.playlist.selected {
+    background-color: #e0eff8; /* Light blue for selected state */
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid var(--primary-color); /* Highlight with primary color */
+    padding-left: 0.7rem; /* Adjust padding due to border */
+}
+
+li.playlist span.name {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 400; /* Regular font weight for list names */
+    color: var(--text-color-primary);
+    font-size: 0.95rem;
+    cursor: default;
+}
+
+.playlist-checkbox {
+    width: 1.1em;
+    height: 1.1em;
+    accent-color: var(--primary-color); /* Checkbox accent color */
+    cursor: pointer;
+    margin: 0;
+    flex-shrink: 0;
+    border-radius: 3px; /* Minimal rounding */
+}
+
+div.playlist-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem; /* Spacing between actions */
+}
+
+.playlist-actions .trigger-icon-button {
+    background: var(--primary-color); /* Trigger button uses primary color */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background-color var(--transition-duration) var(--transition-easing),
+                transform var(--transition-duration) var(--transition-easing),
+                box-shadow var(--transition-duration) var(--transition-easing);
+    flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0, 86, 179, 0.15);
+}
+
+.playlist-actions .trigger-icon-button:hover {
+    background: var(--primary-hover);
+    transform: scale(1.08);
+    box-shadow: 0 2px 6px rgba(0, 86, 179, 0.25);
+}
+
+/* Preview box */
+#previewBox {
+    position: absolute;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    padding: 0.9rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 6px 15px var(--shadow-medium);
+    max-width: 300px;
+    pointer-events: none;
+    display: none;
+    z-index: 1000;
+    font-size: 0.88rem;
+    color: var(--text-color-primary);
+    user-select: none;
+    opacity: 0; /* Start hidden for fade-in */
+    transition: opacity var(--transition-duration) var(--transition-easing);
+}
+
+#previewBox.show { /* Class added by JS to show it */
+    opacity: 1;
+}
+
+/* Scrollbar for playlist list */
+ul.playlist-list::-webkit-scrollbar {
+    width: 8px;
+}
+ul.playlist-list::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color); /* Scrollbar thumb uses primary color */
+    border-radius: 10px;
+}
+ul.playlist-list::-webkit-scrollbar-track {
+    background: var(--border-color); /* Scrollbar track uses border color */
+    border-radius: 10px;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.55); /* Slightly darker overlay */
+    justify-content: center;
+    align-items: center;
+    padding: 20px; /* Added padding for small screens */
+}
+
+.modal-content {
+    background-color: var(--surface-color);
+    margin: auto;
+    padding: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    max-width: 500px; /* Increased max-width for better form layout */
+    width: 90%;
+    position: relative;
+    animation: fadeIn 0.3s ease-out; /* Existing fade-in animation */
+    border: 1px solid var(--border-color); /* Added subtle border */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-content h3 {
+    color: var(--text-color-primary);
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    text-align: center;
+    font-weight: 500;
+}
+
+.modal-content label {
+    display: block;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+}
+
+.modal-content input[type="text"],
+.modal-content textarea,
+.modal-content select {
+    margin-bottom: 1rem; /* Spacing between inputs */
+    margin-top: 0.5rem;
+}
+
+.modal-content input[type="file"] {
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+}
+
+/* Drag & Drop Area */
+.drag-drop-area {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.drag-drop-area.highlight {
+    background-color: #e9f0f5;
+    border-color: var(--primary-color);
+}
+
+.drag-drop-area i {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+/* Thumbnail Preview */
+#thumbnailPreview {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    display: none; /* Hidden by default */
+    border: 1px solid var(--border-color);
+}
+
+/* Progress Bar */
+.progress-container {
+    width: 100%;
+    background-color: var(--border-color);
+    border-radius: var(--border-radius);
+    margin-top: 1.5rem;
+    overflow: hidden;
+    height: 20px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: var(--accent-color); /* YouTube Red for progress */
+    border-radius: var(--border-radius);
+    text-align: center;
+    line-height: 20px; /* Center text vertically */
+    color: white;
+    transition: width 0.3s ease-out;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 1.8rem;
+}
+
+.modal-buttons button {
+    flex: 1;
+    margin-top: 0;
+    padding: 0.9rem 0;
+    font-weight: 500;
+}
+
+.modal-buttons .cancel-btn {
+    background-color: var(--text-color-secondary);
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2);
+}
+
+.modal-buttons .cancel-btn:hover {
+    background-color: #5a6268;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #b24592, #f15f79); /* deep to rich purple */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Bulk Upload Specific Styles */
+.bulk-upload-container {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+}
+
+.bulk-upload-files-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    background-color: var(--bg-color);
+}
+
+.bulk-file-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.bulk-file-item:last-child {
+    border-bottom: none;
+}
+
+.bulk-file-icon {
+    margin-right: 0.5rem;
+    color: var(--primary-color);
+}
+
+.bulk-file-name {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bulk-file-size {
+    color: var(--text-color-secondary);
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+}
+
+.bulk-upload-progress {
+    margin-top: 1rem;
+}
+
+.bulk-upload-progress-item {
+    margin-bottom: 0.5rem;
+}
+
+.bulk-upload-progress-bar {
+    height: 10px;
+    background-color: var(--border-color);
+    border-radius: var(--border-radius);
+    margin-top: 0.3rem;
+    overflow: hidden;
+}
+
+.bulk-upload-progress-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.bulk-upload-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-color-secondary);
+}
+
+.switch-upload-type {
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--primary-color);
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.9rem;
+}
+
+.switch-upload-type:hover {
+    color: var(--primary-hover);
+}
+
+/* Tab Navigation */
+.upload-tabs {
+    display: flex;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.upload-tab {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.upload-tab.active {
+    border-bottom: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.upload-tab:hover:not(.active) {
+    border-bottom: 2px solid var(--border-color);
+}
+
+.upload-tab-content {
+    display: none;
+}
+
+.upload-tab-content.active {
+    display: block;
+}
+
+/* Added for file delete button in preview (now used in manage files modal too) */
+.file-list-item { /* Changed from .preview-file-item to be more general */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0; /* Increased padding for better click area */
+    border-bottom: 1px dashed var(--border-color);
+}
+.file-list-item:last-child {
+    border-bottom: none;
+}
+
+.file-list-item button {
+    width: auto;
+    padding: 4px 10px; /* Adjusted padding for better button size */
+    font-size: 0.8rem; /* Adjusted font size */
+    margin-left: 10px;
+    background-color: var(--accent-color);
+    border-radius: 4px;
+    opacity: 0.9;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    pointer-events: all; /* Make button clickable */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.file-list-item button:hover {
+    background-color: var(--accent-hover);
+    opacity: 1;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* New: styles for the manage files modal */
+#manageFilesModal .modal-content {
+    max-width: 600px;
+}
+#manageFilesModal .file-list-container {
+    max-height: 350px; /* Make file list scrollable */
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 10px;
+    margin-top: 15px;
+    background-color: var(--bg-color);
+}
+#manageFilesModal .file-list-container p {
+    text-align: center;
+    color: var(--text-color-secondary);
+    padding: 10px;
+}
+
+</style>
+</head>
+<body>
+      <main class="dashboard" role="main" aria-label="File management dashboard">
+        <section class="tile manage" aria-labelledby="managePlaylistsLabel" tabindex="0">
+            <i class="fas fa-list" aria-hidden="true"></i>
+<h2 style="
+  color: #004aad;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: bold;
+  font-size: 2rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  animation: fadeIn 1s ease-in-out;
+">
+  <i class="fa-solid fa-photo-film"></i>
+  Manage Media Player - <span class="gradient-text">Dual</span>
+</h2>
+
+
+            <div class="top-action-buttons-wrapper">
+                <button id="createPlaylistTileBtn" type="button" title="Create New Playlist">
+                    <i class="fas fa-plus-circle" aria-hidden="true"></i>
+                    <span>Create Playlist</span>
+                </button>
+                <button id="uploadFilesTileBtn" type="button" title="Upload Files">
+                    <i class="fas fa-upload" aria-hidden="true"></i>
+                    <span>Upload Files</span>
+                </button>
+                <button id="renamePlaylistIcon" type="button" title="Rename Selected Playlist" disabled>
+                    <i class="fas fa-edit"></i> Rename
+                </button>
+                <button id="deletePlaylistIcon" type="button" title="Delete Selected Playlist" disabled>
+                    <i class="fas fa-trash-alt"></i> Delete
+                </button>
+                 <button id="manageFilesBtn" type="button" title="Manage Files in Selected Playlist" disabled>
+                    <i class="fas fa-folder-open"></i> Manage Files
+                </button>
+            </div>
+
+            <ul id="playlistList" class="playlist-list" role="list" aria-live="polite" aria-relevant="additions removals"></ul>
+        </section>
+    </main>
+
+    <div id="previewBox" role="tooltip" aria-hidden="true"></div>
+
+    <div id="createPlaylistModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
+        <div class="modal-content">
+            <h3 id="createModalTitle">Create New Playlist</h3>
+            <label for="modalPlaylistName">Playlist Name:</label>
+            <input type="text" id="modalPlaylistName" placeholder="Enter playlist name" aria-label="Playlist name" />
+            <div class="modal-buttons">
+                <button id="modalCreateBtn" type="button">Create</button>
+                <button id="modalCreateCancel" type="button" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="uploadFilesModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
+        <div class="modal-content">
+            <h3 id="uploadModalTitle">Upload Files to Playlist</h3>
+            <label for="bulkFilePlaylistSelect">Available Playlist:</label>
+            <select id="bulkFilePlaylistSelect" aria-label="Select playlist for bulk files" aria-required="true"></select>
+            
+            <label for="bulkUploadedFiles">Select Files:</label>
+            <div id="bulkDragDropArea" class="drag-drop-area">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Drag & Drop multiple files here or click to select</span>
+                <input type="file" id="bulkUploadedFiles" name="bulkUploadedFiles" multiple aria-label="Select files to upload" style="display: none;" />
+            </div>
+            
+            <div class="bulk-upload-container">
+                <div id="bulkFilesList" class="bulk-upload-files-list" style="display: none;">
+                    <div id="bulkFilesListContent"></div>
+                </div>
+                
+                <div id="bulkUploadProgress" class="bulk-upload-progress" style="display: none;"></div>
+                
+                <div class="modal-buttons">
+                    <button id="modalBulkUploadBtn" type="button" disabled>Upload All Files</button>
+                    <button id="modalBulkUploadCancel" type="button" class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="manageFilesModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="manageFilesModalTitle">
+        <div class="modal-content">
+            <h3 id="manageFilesModalTitle">Manage Files in: <span id="currentManagePlaylistName"></span></h3>
+            <div class="file-list-container">
+                <div id="manageFilesListContent"></div>
+            </div>
+            <div class="modal-buttons">
+                <button id="modalManageFilesClose" type="button" class="cancel-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const playlistList = document.getElementById('playlistList');
+        const previewBox = document.getElementById('previewBox');
+        const renamePlaylistIcon = document.getElementById('renamePlaylistIcon');
+        const deletePlaylistIcon = document.getElementById('deletePlaylistIcon');
+        const manageFilesBtn = document.getElementById('manageFilesBtn'); // New button
+
+        // Original elements for modals
+        const createPlaylistTileBtn = document.getElementById('createPlaylistTileBtn');
+        const uploadFilesTileBtn = document.getElementById('uploadFilesTileBtn'); 
+
+        const createPlaylistModal = document.getElementById('createPlaylistModal');
+        const uploadFilesModal = document.getElementById('uploadFilesModal'); 
+        const manageFilesModal = document.getElementById('manageFilesModal'); // New modal
+
+        const modalCreateBtn = document.getElementById('modalCreateBtn');
+        const modalCreateCancel = document.getElementById('modalCreateCancel');
+        const modalPlaylistName = document.getElementById('modalPlaylistName');
+
+        // Bulk upload elements
+        const bulkFilePlaylistSelect = document.getElementById('bulkFilePlaylistSelect');
+        const bulkUploadedFilesInput = document.getElementById('bulkUploadedFiles');
+        const bulkDragDropArea = document.getElementById('bulkDragDropArea');
+        const bulkFilesList = document.getElementById('bulkFilesList');
+        const bulkFilesListContent = document.getElementById('bulkFilesListContent');
+        const bulkUploadProgress = document.getElementById('bulkUploadProgress');
+        const modalBulkUploadBtn = document.getElementById('modalBulkUploadBtn');
+        const modalBulkUploadCancel = document.getElementById('modalBulkUploadCancel');
+
+        // Manage files modal elements
+        const currentManagePlaylistName = document.getElementById('currentManagePlaylistName');
+        const manageFilesListContent = document.getElementById('manageFilesListContent');
+        const modalManageFilesClose = document.getElementById('modalManageFilesClose');
+
+
+        let previewTimeout;
+        let selectedPlaylistName = null; // To keep track of the currently selected playlist
+
+        // To store files for bulk upload (selected, not yet "uploaded")
+        let bulkFiles = []; 
+
+        // IMPORTANT: This 'allPlaylistsData' will temporarily hold data fetched from your JSON.
+        // It should be considered a local cache of the server's data.
+        let allPlaylistsData = []; 
+
+        // Function to open a modal
+        const openModal = (modalElement) => {
+            modalElement.style.display = 'flex';
+            modalElement.setAttribute('aria-hidden', 'false');
+            const firstFocusableElement = modalElement.querySelector('input, select, button, textarea');
+            if (firstFocusableElement) {
+                firstFocusableElement.focus();
+            }
+        };
+
+        // Function to close a modal
+        const closeModal = (modalElement) => {
+            modalElement.style.display = 'none';
+            modalElement.setAttribute('aria-hidden', 'true');
+            // Reset specific modal fields when closed
+            if (modalElement === uploadFilesModal) {
+                bulkFiles = [];
+                bulkUploadedFilesInput.value = '';
+                bulkFilesList.style.display = 'none';
+                bulkFilesListContent.innerHTML = '';
+                bulkUploadProgress.style.display = 'none';
+                modalBulkUploadBtn.disabled = true;
+                modalBulkUploadBtn.textContent = 'Upload All Files';
+            }
+            if (modalElement === manageFilesModal) {
+                manageFilesListContent.innerHTML = ''; // Clear content when closing
+            }
+        };
+
+        // Fetch and render playlists (now also populates filePlaylistSelect)
+        const fetchPlaylists = async () => {
+            try {
+                // This fetches from your backend, which should serve playlist.json
+                const res = await fetch('/api/playlists'); 
+                const playlists = await res.json();
+                allPlaylistsData = playlists; // Update our in-memory cache
+
+                // Sort playlists: by createdAt if available, otherwise by name
+                if (playlists.length > 0 && playlists[0].createdAt) {
+                    playlists.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                } else {
+                    playlists.sort((a,b) => a.name.localeCompare(b.name));
+                }
+
+                playlistList.innerHTML = '';
+                bulkFilePlaylistSelect.innerHTML = ''; // Clear options for bulk upload select
+                selectedPlaylistName = null; // Reset selection on re-render
+                updateGlobalActionButtons();
+
+                if (playlists.length === 0) {
+                    const emptyMessage = document.createElement('li');
+                    emptyMessage.textContent = 'No playlists found. Create one now!';
+                    emptyMessage.style.textAlign = 'center';
+                    emptyMessage.style.padding = '1rem';
+                    emptyMessage.style.color = 'var(--text-color-secondary)';
+                    playlistList.appendChild(emptyMessage);
+
+                    const noPlaylistOption = document.createElement('option');
+                    noPlaylistOption.value = "";
+                    noPlaylistOption.textContent = "No playlists available";
+                    noPlaylistOption.disabled = true;
+                    noPlaylistOption.selected = true;
+                    bulkFilePlaylistSelect.appendChild(noPlaylistOption);
+                } else {
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = "";
+                    defaultOption.textContent = "-- Select a playlist --";
+                    defaultOption.disabled = true;
+                    defaultOption.selected = true;
+                    bulkFilePlaylistSelect.appendChild(defaultOption);
+                }
+
+                playlists.forEach(({ name }) => {
+                    const li = document.createElement('li');
+                    li.className = 'playlist';
+                    li.setAttribute('data-playlist-name', name);
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'playlist-checkbox';
+                    checkbox.title = `Select playlist "${name}"`;
+                    checkbox.addEventListener('change', (event) => togglePlaylistSelection(name, li, event.target.checked));
+
+                    const span = document.createElement('span');
+                    span.className = 'name';
+                    span.tabIndex = 0;
+                    span.textContent = name;
+                    span.title = `Hover or focus to preview ${name}`;
+                    span.addEventListener('mouseenter', e => showPreview(e, name));
+                    span.addEventListener('mouseleave', hidePreview);
+                    span.addEventListener('mousemove', movePreview);
+                    span.addEventListener('focus', e => showPreview(e, name));
+                    span.addEventListener('blur', hidePreview);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'playlist-actions';
+
+                    const triggerBtn = document.createElement('button');
+                    triggerBtn.type = 'button';
+                    triggerBtn.className = 'trigger-icon-button';
+                    triggerBtn.title = `Trigger playlist "${name}"`;
+                    const triggerIcon = document.createElement('i');
+                    triggerIcon.className = 'fas fa-bolt';
+                    triggerBtn.appendChild(triggerIcon);
+                    triggerBtn.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        triggerPlaylist(name);
+                    });
+
+                    actions.append(triggerBtn);
+                    li.append(checkbox, span, actions);
+                    playlistList.appendChild(li);
+
+                    // Populate file upload playlist select
+                    const option = document.createElement('option');
+                    option.value = option.textContent = name;
+                    bulkFilePlaylistSelect.appendChild(option);
+                });
+
+                // Set default selected option for bulk upload dropdown
+                if (playlists.length > 0) {
+                    // Check if the default option is still "-- Select a playlist --" and if so, select the first actual playlist
+                    if (bulkFilePlaylistSelect.value === "" && bulkFilePlaylistSelect.options.length > 1) {
+                         bulkFilePlaylistSelect.value = playlists[0].name;
+                    }
+                }
+
+            } catch (err) {
+                console.error('Error fetching playlists:', err);
+                playlistList.innerHTML = '<li style="text-align: center; padding: 1rem; color: var(--text-color-secondary);">Failed to load playlists. Ensure your backend server is running and serving /api/playlists.</li>';
+
+                bulkFilePlaylistSelect.innerHTML = '';
+                const errorOption = document.createElement('option');
+                errorOption.value = "";
+                errorOption.textContent = "Error loading playlists";
+                errorOption.disabled = true;
+                errorOption.selected = true;
+                bulkFilePlaylistSelect.appendChild(errorOption);
+            }
+        };
+
+        const togglePlaylistSelection = (name, element, isChecked) => {
+            if (isChecked) {
+                const previouslySelectedLi = playlistList.querySelector('.playlist.selected');
+                const previouslySelectedCheckbox = playlistList.querySelector('.playlist-checkbox:checked');
+
+                if (previouslySelectedLi && previouslySelectedLi !== element) {
+                    previouslySelectedLi.classList.remove('selected');
+                    if (previouslySelectedCheckbox) {
+                        previouslySelectedCheckbox.checked = false;
+                    }
+                }
+
+                element.classList.add('selected');
+                selectedPlaylistName = name;
+            } else {
+                element.classList.remove('selected');
+                selectedPlaylistName = null;
+            }
+            updateGlobalActionButtons();
+        };
+
+        const updateGlobalActionButtons = () => {
+            if (selectedPlaylistName) {
+                renamePlaylistIcon.disabled = false;
+                deletePlaylistIcon.disabled = false;
+                manageFilesBtn.disabled = false; // Enable manage files button
+            } else {
+                renamePlaylistIcon.disabled = true;
+                deletePlaylistIcon.disabled = true;
+                manageFilesBtn.disabled = true; // Disable manage files button
+            }
+        };
+
+        const createPlaylist = async () => {
+            const name = modalPlaylistName.value.trim();
+            if (!name) {
+                alert('Please enter a playlist name.');
+                modalPlaylistName.focus();
+                return;
+            }
+            try {
+                const res = await fetch('/api/playlists', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                });
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Failed to create playlist');
+                }
+                modalPlaylistName.value = '';
+                closeModal(createPlaylistModal);
+                await fetchPlaylists(); // Re-fetch to update UI from actual JSON
+                alert(`Playlist "${name}" created successfully!`);
+            }
+            catch (err) {
+                alert('Failed to create playlist: ' + err.message);
+                console.error(err);
+            }
+        };
+
+        const deletePlaylist = async () => {
+            if (!selectedPlaylistName) {
+                alert('Please select a playlist to delete using its checkbox.');
+                return;
+            }
+            if (!confirm(`Are you sure you want to delete playlist "${selectedPlaylistName}"?`)) return;
+            try {
+                const res = await fetch(`/api/playlists/${encodeURIComponent(selectedPlaylistName)}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Failed to delete playlist');
+                }
+                await fetchPlaylists(); // Re-fetch to update UI from actual JSON
+                alert(`Playlist "${selectedPlaylistName}" deleted!`);
+            } catch (err) {
+                alert('Failed to delete playlist: ' + err.message);
+                console.error(err);
+            }
+        };
+
+        const renamePlaylist = async () => {
+            if (!selectedPlaylistName) {
+                alert('Please select a playlist to rename using its checkbox.');
+                return;
+            }
+            const newName = prompt('Enter new name for the playlist:', selectedPlaylistName);
+            if (!newName || newName.trim() === '' || newName === selectedPlaylistName) return;
+            try {
+                const res = await fetch(`/api/playlists/${encodeURIComponent(selectedPlaylistName)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newName }),
+                });
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Failed to rename playlist');
+                }
+                await fetchPlaylists(); // Re-fetch to update UI from actual JSON
+                alert(`Playlist "${selectedPlaylistName}" renamed to "${newName}"!`);
+            } catch (err) {
+                alert('Failed to rename playlist: ' + err.message);
+                console.error(err);
+            }
+        };
+
+        const triggerPlaylist = async name => {
+            try {
+                // This is a placeholder for your trigger logic
+                // In a real app, this might send a command to a media player device
+                const res = await fetch(`/api/playlists/${encodeURIComponent(name)}/trigger`, { method: 'POST' });
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Failed to trigger playlist');
+                }
+                alert(`Playlist "${name}" triggered!`);
+            } catch (err) {
+                alert('Failed to trigger playlist: ' + err.message);
+                console.error(err);
+            }
+        };
+
+        // --- Bulk Upload Functions ---
+        const handleBulkFileUploadChange = (files) => {
+            bulkFiles = Array.from(files);
+            
+            if (bulkFiles.length === 0) {
+                bulkFilesList.style.display = 'none';
+                modalBulkUploadBtn.disabled = true;
+                return;
+            }
+            
+            bulkFilesList.style.display = 'block';
+            bulkFilesListContent.innerHTML = '';
+            
+            bulkFiles.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'bulk-file-item';
+                
+                const fileIcon = document.createElement('i');
+                fileIcon.className = 'bulk-file-icon fas ' + getFileIconClass(file);
+                
+                const fileName = document.createElement('div');
+                fileName.className = 'bulk-file-name';
+                fileName.textContent = file.name;
+                
+                const fileSize = document.createElement('div');
+                fileSize.className = 'bulk-file-size';
+                fileSize.textContent = formatFileSize(file.size);
+                
+                fileItem.appendChild(fileIcon);
+                fileItem.appendChild(fileName);
+                fileItem.appendChild(fileSize);
+                bulkFilesListContent.appendChild(fileItem);
+            });
+            
+            modalBulkUploadBtn.disabled = false;
+        };
+        
+        const getFileIconClass = (file) => {
+            if (file.type.startsWith('image/')) return 'fa-image';
+            if (file.type.startsWith('video/')) return 'fa-video';
+            if (file.type.startsWith('audio/')) return 'fa-music';
+            return 'fa-file';
+        };
+        
+        const formatFileSize = (bytes) => {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        };
+        
+        const uploadBulkFiles = async () => {
+            const selectedPlaylist = bulkFilePlaylistSelect.value;
+            
+            if (!selectedPlaylist) {
+                alert('Please select a playlist for the files.');
+                bulkFilePlaylistSelect.focus();
+                return;
+            }
+            
+            if (bulkFiles.length === 0) {
+                alert('Please select files to upload.');
+                return;
+            }
+            
+            modalBulkUploadBtn.disabled = true;
+            modalBulkUploadBtn.textContent = 'Uploading...';
+            bulkUploadProgress.style.display = 'block';
+            bulkUploadProgress.innerHTML = '';
+            
+            // Create progress elements for each file
+            bulkFiles.forEach((file, index) => {
+                const progressItem = document.createElement('div');
+                progressItem.className = 'bulk-upload-progress-item';
+                progressItem.id = `progress-${index}`;
+                
+                const fileName = document.createElement('div');
+                fileName.textContent = file.name;
+                
+                const progressBarContainer = document.createElement('div');
+                progressBarContainer.className = 'bulk-upload-progress-bar';
+                
+                const progressBar = document.createElement('div');
+                progressBar.className = 'bulk-upload-progress-fill';
+                progressBar.id = `progress-bar-${index}`;
+                progressBar.style.width = '0%';
+                
+                progressBarContainer.appendChild(progressBar);
+                progressItem.appendChild(fileName);
+                progressItem.appendChild(progressBarContainer);
+                bulkUploadProgress.appendChild(progressItem);
+            });
+            
+            // Create stats element
+            const statsElement = document.createElement('div');
+            statsElement.className = 'bulk-upload-stats';
+            statsElement.innerHTML = `
+                <span id="filesUploaded">0 of ${bulkFiles.length} files uploaded</span>
+                <span id="uploadSpeed">-</span>
+            `;
+            bulkUploadProgress.appendChild(statsElement);
+            
+            // Upload files sequentially
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (let i = 0; i < bulkFiles.length; i++) {
+                const file = bulkFiles[i];
+                
+                const formData = new FormData();
+                formData.append('playlistName', selectedPlaylist);
+                formData.append('title', file.name); // Using file.name as the title
+                formData.append('uploadedFile', file); // Append the actual file
+
+                try {
+                    const startTime = Date.now();
+                    
+                    const updateProgress = (progress) => {
+                        const progressBar = document.getElementById(`progress-bar-${i}`);
+                        if (progressBar) {
+                            progressBar.style.width = `${progress}%`;
+                        }
+                    };
+                    
+                    let progress = 0;
+                    const progressInterval = setInterval(() => {
+                        progress += 5;
+                        if (progress <= 100) {
+                            updateProgress(progress);
+                        } else {
+                            clearInterval(progressInterval);
+                        }
+                    }, 50); 
+                    
+                    const res = await fetch('/api/files/upload', { // Call your backend upload endpoint
+                        method: 'POST',
+                        body: formData, // Send formData
+                    });
+                    
+                    clearInterval(progressInterval);
+                    updateProgress(100);
+                    
+                    if (!res.ok) {
+                        const errorData = await res.json();
+                        throw new Error(errorData.error || 'Upload failed due to a server error.');
+                    }
+                    
+                    successCount++;
+                    
+                    const endTime = Date.now();
+                    const duration = (endTime - startTime) / 1000; 
+                    const speed = file.size / duration; 
+                    
+                    document.getElementById('filesUploaded').textContent = 
+                        `${successCount + errorCount} of ${bulkFiles.length} files uploaded`;
+                    document.getElementById('uploadSpeed').textContent = 
+                        `Speed: ${formatFileSize(speed)}/s`;
+                    
+                } catch (err) {
+                    errorCount++;
+                    console.error(`Failed to upload file ${file.name}:`, err);
+                    document.getElementById(`progress-${i}`).style.color = 'var(--accent-color)';
+                    document.getElementById(`progress-${i}`).innerHTML += 
+                        `<div style="color: var(--accent-color); font-size: 0.8rem;">Error: ${err.message}</div>`;
+                    
+                    document.getElementById('filesUploaded').textContent = 
+                        `${successCount + errorCount} of ${bulkFiles.length} files uploaded`;
+                }
+            }
+            
+            // Final status
+            modalBulkUploadBtn.textContent = 'Upload Complete';
+            
+            setTimeout(async () => { // Made this async to await fetchPlaylists
+                if (errorCount === 0) {
+                    alert(`All ${successCount} files uploaded successfully to playlist "${selectedPlaylist}"!`);
+                } else if (successCount === 0) {
+                    alert(`All ${errorCount} files failed to upload. Please try again.`);
+                } else {
+                    alert(`${successCount} files uploaded successfully, ${errorCount} files failed.`);
+                }
+                
+                closeModal(uploadFilesModal);
+                await fetchPlaylists(); // Re-fetch to update the main list with new files
+            }, 1000);
+        };
+        
+        // Function to delete a file from a playlist (NOW REAL with backend!)
+        const deleteFileFromPlaylist = async (playlistName, fileName) => {
+            if (!confirm(`Are you sure you want to delete "${fileName}" from playlist "${playlistName}"? This action is permanent.`)) {
+                return;
+            }
+
+            try {
+                // This is the real API call to your backend
+                const res = await fetch(`/api/playlists/${encodeURIComponent(playlistName)}/files/${encodeURIComponent(fileName)}`, {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Failed to delete file from playlist');
+                }
+
+                alert(`File "${fileName}" deleted from playlist "${playlistName}" permanently!`);
+                
+                // After successful deletion on backend, update our local cache and re-render UI
+                // Re-fetch playlists to get the absolute latest state from the server.
+                await fetchPlaylists(); 
+
+                // If the manage files modal is open for this playlist, refresh its content
+                if (manageFilesModal.style.display === 'flex' && currentManagePlaylistName.textContent === playlistName) {
+                    openManageFilesModal(); // Re-open to refresh the list
+                } else if (previewBox.style.display === 'block') { // If preview box is open, refresh it
+                     // We need to pass event object for movePreview, so creating a dummy one.
+                    // This creates a dummy event object for consistency, but you might want to reconsider
+                    // refreshing the preview box if the user has moved their mouse away.
+                    showPreview({ clientX: event.clientX, clientY: event.clientY }, playlistName); 
+                }
+
+            } catch (err) {
+                alert('Failed to delete file: ' + err.message);
+                console.error(err);
+                // If deletion fails on backend, re-fetch to ensure local state matches server
+                fetchPlaylists(); 
+            }
+        };
+
+        // NEW FUNCTION: Open Manage Files Modal
+        const openManageFilesModal = () => {
+            if (!selectedPlaylistName) {
+                alert('Please select a playlist to manage its files.');
+                return;
+            }
+
+            const playlist = allPlaylistsData.find(p => p.name === selectedPlaylistName);
+
+            if (!playlist) {
+                alert(`Playlist "${selectedPlaylistName}" not found in current data.`);
+                return;
+            }
+
+            currentManagePlaylistName.textContent = selectedPlaylistName;
+            manageFilesListContent.innerHTML = ''; // Clear previous content
+
+            if (playlist.files && playlist.files.length > 0) {
+                playlist.files.forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-list-item';
+                    
+                    const fileNameSpan = document.createElement('span');
+                    // Display either 'name' or 'originalname' or 'filename' as fallback
+                    fileNameSpan.textContent = file.name || file.originalname || file.filename; 
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    // Pass the backend-facing filename (Multer's 'filename' property) for deletion
+                    // This is crucial because your backend uses `req.params.filename` which corresponds to Multer's filename.
+                    // Make sure to escape single quotes properly.
+                    const filenameToPass = (file.filename || file.name || file.originalname).replace(/'/g, "\\'").replace(/"/g, '\\"');
+                    deleteButton.onclick = () => deleteFileFromPlaylist(selectedPlaylistName, filenameToPass);
+                    
+                    fileItem.appendChild(fileNameSpan);
+                    fileItem.appendChild(deleteButton);
+                    manageFilesListContent.appendChild(fileItem);
+                });
+            } else {
+                const noFilesMessage = document.createElement('p');
+                noFilesMessage.textContent = 'No files in this playlist.';
+                manageFilesListContent.appendChild(noFilesMessage);
+            }
+
+            openModal(manageFilesModal);
+        };
+
+
+        // Preview box functions 
+        const showPreview = async (event, playlistName) => {
+            clearTimeout(previewTimeout);
+            previewBox.style.display = 'block';
+            previewBox.innerHTML = `Loading preview for "${playlistName}"...`; 
+
+            // Get playlist data from our locally cached 'allPlaylistsData'
+            const playlistData = allPlaylistsData.find(p => p.name === playlistName);
+
+            if (!playlistData) {
+                previewBox.textContent = `Could not load preview for "${playlistName}". Playlist not found.`;
+                return;
+            }
+
+            let previewContent = `<strong>Playlist: ${playlistData.name}</strong><br>`;
+            if (playlistData.files && playlistData.files.length > 0) {
+                previewContent += 'Files:<br>';
+                const filesToShow = playlistData.files.slice(0, 5); // Show first 5 files
+                filesToShow.forEach(f => {
+                    previewContent += `
+                        <div class="file-list-item">
+                            <span>- ${f.name || f.originalname || f.filename}</span>
+                            <button onclick="deleteFileFromPlaylist('${playlistName}', '${(f.filename || f.name || f.originalname).replace(/'/g, "\\'").replace(/"/g, '\\"')}')">Delete</button>
+                        </div>
+                    `;
+                });
+                if (playlistData.files.length > 5) {
+                    previewContent += `...and ${playlistData.files.length - 5} more.`;
+                }
+            } else {
+                previewContent += 'No files yet.';
+            }
+            previewBox.innerHTML = previewContent; 
+
+            movePreview(event);
+            previewBox.setAttribute('aria-hidden', 'false');
+        };
+
+        const movePreview = event => {
+            const padding = 12;
+            const box = previewBox.getBoundingClientRect();
+            let x = event.clientX + padding;
+            let y = event.clientY + padding;
+
+            if (x + box.width > window.innerWidth) {
+                x = event.clientX - box.width - padding;
+            }
+            if (y + box.height > window.innerHeight) {
+                y = event.clientY - box.height - padding;
+            }
+
+            previewBox.style.left = `${x}px`;
+            previewBox.style.top = `${y}px`;
+        };
+
+        const hidePreview = () => {
+            previewTimeout = setTimeout(() => {
+                previewBox.style.display = 'none';
+                previewBox.setAttribute('aria-hidden', 'true');
+            }, 300);
+        };
+
+        // --- Event Listeners ---
+
+        createPlaylistTileBtn.addEventListener('click', () => openModal(createPlaylistModal));
+        uploadFilesTileBtn.addEventListener('click', () => { 
+            fetchPlaylists(); // Ensure latest playlists are in the dropdown
+            openModal(uploadFilesModal); 
+        });
+
+        modalCreateBtn.addEventListener('click', createPlaylist);
+        modalCreateCancel.addEventListener('click', () => closeModal(createPlaylistModal));
+
+        bulkUploadedFilesInput.addEventListener('change', (event) => handleBulkFileUploadChange(event.target.files));
+        modalBulkUploadBtn.addEventListener('click', uploadBulkFiles);
+        modalBulkUploadCancel.addEventListener('click', () => closeModal(uploadFilesModal));
+        
+        bulkDragDropArea.addEventListener('click', () => bulkUploadedFilesInput.click());
+        
+        bulkDragDropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            bulkDragDropArea.classList.add('highlight');
+        });
+        
+        bulkDragDropArea.addEventListener('dragleave', () => {
+            bulkDragDropArea.classList.remove('highlight');
+        });
+        
+        bulkDragDropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            bulkDragDropArea.classList.remove('highlight');
+            handleBulkFileUploadChange(event.dataTransfer.files);
+        });
+
+        renamePlaylistIcon.addEventListener('click', renamePlaylist);
+        deletePlaylistIcon.addEventListener('click', deletePlaylist);
+        manageFilesBtn.addEventListener('click', openManageFilesModal); // New event listener for manage files button
+        modalManageFilesClose.addEventListener('click', () => closeModal(manageFilesModal)); // Close manage files modal
+
+
+        window.addEventListener('click', (event) => {
+            if (event.target === createPlaylistModal) {
+                closeModal(createPlaylistModal);
+            }
+            if (event.target === uploadFilesModal) { 
+                closeModal(uploadFilesModal); 
+            }
+            if (event.target === manageFilesModal) { // Close manage files modal if clicked outside
+                closeModal(manageFilesModal);
+            }
+        });
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                if (createPlaylistModal.style.display === 'flex') {
+                    closeModal(createPlaylistModal);
+                }
+                if (uploadFilesModal.style.display === 'flex') { 
+                    closeModal(uploadFilesModal); 
+                }
+                 if (manageFilesModal.style.display === 'flex') { // Close manage files modal on Escape
+                    closeModal(manageFilesModal);
+                }
+            }
+        });
+
+        fetchPlaylists(); // Initial fetch on page load
+    </script>
+</body>
+</html>

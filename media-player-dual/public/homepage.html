@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - Sky-Punk Abyss</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --dark-abyss-blue: #0A1128; /* Very dark blue */
+            --deep-void-blue: #1C2B40; /* Slightly lighter dark blue */
+            --electric-cyan: #00FFFF; /* Bright cyan */
+            --crisp-white: #FFFFFF; /* Pure white */
+            --shadow-color: rgba(0, 0, 0, 0.7);
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column; /* Changed to column to accommodate header */
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to right, var(--dark-abyss-blue), var(--deep-void-blue)); /* Dark blue gradient */
+        }
+
+        .dashboard-header {
+            width: 100%;
+            padding: 15px 0;
+            text-align: center;
+            color: var(--electric-cyan); /* Electric cyan header text */
+            font-size: 1.8em;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--electric-cyan); /* Glowing text effect */
+            background: rgba(0, 0, 0, 0.8); /* Darker semi-transparent header */
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            position: fixed; /* Fixed at the top */
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px; /* Add padding for logout button */
+            box-sizing: border-box;
+        }
+
+        .dashboard-header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            flex-grow: 1; /* Allow title to take available space */
+        }
+
+        .logout-button {
+            background: linear-gradient(to right, #FF007F, #FF8C00); /* Pink to Orange gradient */
+            color: var(--crisp-white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 8px rgba(255, 0, 127, 0.4);
+        }
+
+        .logout-button:hover {
+            background: linear-gradient(to right, #FF8C00, #FF007F);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 0, 127, 0.6);
+        }
+
+        .dashboard-container {
+            display: flex;
+            width: 95%;
+            height: calc(95% - 70px); /* Adjust height for fixed header */
+            gap: 20px;
+            background-color: rgba(0, 0, 0, 0.7); /* Transparent black for the container */
+            border-radius: 15px;
+            box-shadow: 0 10px 40px var(--shadow-color);
+            padding: 20px;
+            box-sizing: border-box;
+            border: 2px solid var(--electric-cyan); /* Electric cyan border */
+            margin-top: 70px; /* Space for the fixed header */
+        }
+
+        iframe {
+            flex: 1;
+            height: 100%;
+            border: none;
+            border-radius: 10px;
+            background-color: #1A1A2E; /* Very dark blue-grey background for iframes */
+            box-shadow: 0 8px 25px var(--shadow-color);
+            transition: transform 0.2s ease-in-out;
+            border: 1px solid var(--electric-cyan); /* Electric cyan outline */
+        }
+
+        iframe:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px var(--shadow-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <h1>Admin Dashboard Overview</h1>
+        <button class="logout-button" onclick="logout()">Logout</button>
+    </div>
+    <div class="dashboard-container">
+        <iframe src="http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3004/admin.html"></iframe>
+        <iframe src="http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3005/admin.html"></iframe>
+    </div>
+
+    <script>
+        console.log("HOMEPAGE: Script begins execution."); // Debugging
+        console.log("HOMEPAGE: document.cookie at script load:", document.cookie); // Debugging
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            console.log("HOMEPAGE: DOMContentLoaded fired."); // Debugging
+            console.log("HOMEPAGE: document.cookie at DOMContentLoaded:", document.cookie); // Debugging
+            const usernameCookieValue = getCookie("username");
+            console.log("HOMEPAGE: Value of 'username' cookie via getCookie():", usernameCookieValue); // Debugging
+
+            // --- Crucial Client-Side Back/Forward Button Handling ---
+            // This prevents the page from being served from the browser's BFCache (back-forward cache)
+            // if a user tries to navigate back after logging out or if their session theoretically expired.
+            // This forces a fresh server request, where your server-side session check will occur.
+            window.onpageshow = function(event) {
+                if (event.persisted) {
+                    console.log("HOMEPAGE: Page restored from BFCache (back/forward button). Forcing reload."); // Debugging
+                    window.location.reload(); // Force reload to ensure server-side authentication is re-checked.
+                }
+            };
+
+            // Initial client-side session check.
+            // **REMEMBER: This is easily bypassed and is NOT a security measure. Server-side is key.**
+            if (!usernameCookieValue) {
+                console.warn("HOMEPAGE: 'username' cookie not found. Redirecting to login page."); // Debugging
+                window.location.replace("login.html");
+            } else {
+                console.info("HOMEPAGE: 'username' cookie found. User appears logged in."); // Debugging
+            }
+        });
+
+        function logout() {
+            console.log("HOMEPAGE: Logout function called."); // Debugging
+            // In a real application, you'd send an AJAX request to your server to invalidate the session.
+            // Example: fetch('/api/logout', { method: 'POST' }).then(() => { ... });
+
+            deleteCookie("username");
+            console.log("HOMEPAGE: 'username' cookie deleted."); // Debugging
+            console.log("HOMEPAGE: document.cookie after logout:", document.cookie); // Debugging
+
+            if (window.history && window.history.replaceState) {
+                // Add a hash to the login URL to potentially signal to the login page
+                // that this was a logout action, preventing it from immediately redirecting
+                // if it has its own history check.
+                window.history.replaceState(null, null, 'login.html#logout');
+                window.location.replace("login.html");
+            } else {
+                // Fallback for older browsers
+                window.location.href = "login.html";
+            }
+        }
+
+        // --- Cookie Functions (copied for consistency) ---
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function deleteCookie(name) {
+            document.cookie = name + '=; Max-Age=-99999999; path=/';
+        }
+    </script>
+           <script src="server_endpoints.js"></script>
+    <script>
+      // Use the URLs as needed
+      console.log("Redirecting to:", WebApps.media_dual);
+      // window.location.href = WebApps.app2;
+    </script>
+</body>
+</html>

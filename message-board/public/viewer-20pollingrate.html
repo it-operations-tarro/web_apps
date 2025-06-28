@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="messageBoardApp">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Message Board</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: sans-serif;
+      background: #f0f0f0;
+      overflow: hidden;
+    }
+
+    iframe {
+      width: 100vw;
+      height: 100vh;
+      border: none;
+    }
+
+#msgOverlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #000;
+  padding: 4vw 4vw;
+  border-radius: 15px;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+  font-size: 5vw;
+  color: white;
+  text-align: center;
+  width: 90vw;
+  max-width: 1200px;
+  word-wrap: break-word;
+  pointer-events: none;
+  user-select: none;
+  z-index: 9999;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+}
+
+/* Adjust font size and padding for large screens */
+@media (min-width: 768px) {
+  #msgOverlay {
+    font-size: 3vw;
+    padding: 3vw 5vw;
+  }
+}
+
+@media (min-width: 1200px) {
+  #msgOverlay {
+    font-size: 48px;
+    padding: 40px 60px;
+  }
+}
+
+
+    /* Styles for the sound prompt overlay */
+    #soundPrompt {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 2.5em;
+      cursor: pointer;
+      z-index: 10000;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+      opacity: 1;
+      transition: opacity 1s ease-out;
+    }
+    #soundPrompt.fade-out {
+        opacity: 0;
+        pointer-events: none;
+    }
+  </style>
+</head>
+<body ng-controller="MainController">
+  <iframe id="viewerFrame" ng-src="{{ viewerFrameSrc }}"></iframe>
+
+  <div id="msgOverlay" ng-show="showMessageOverlay">
+    {{ currentMessage }}
+  </div>
+
+  <audio id="msgSound" ng-src="{{ soundSrc }}" preload="auto"></audio>
+
+  <div id="soundPrompt" ng-if="!audioAllowed" ng-click="allowAudio()">
+    <p>Click anywhere to enable sound for messages.</p>
+    <p style="font-size: 0.6em; opacity: 0.8;">(This is required by your browser.)</p>
+  </div>
+
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+
+  <script>
+    angular.module('messageBoardApp', [])
+      .controller('MainController', function($scope, $http, $interval, $window, $sce) {
+        $scope.viewerFrameSrc = $sce.trustAsResourceUrl('https://dgt-api.letsdochinese.com/KJTCore/resources/queuedisplays.html?display=alltypes');
+        $scope.currentMessage = "Waiting for message...";
+        $scope.showMessageOverlay = false;
+        $scope.soundSrc = $sce.trustAsResourceUrl('/sound.mp3');
+
+        let hideTimeout;
+        let lastMessage = "";
+
+        $scope.audioAllowed = false;
+
+        $scope.allowAudio = async function() {
+          const sound = document.getElementById('msgSound');
+          if (sound) {
+            sound.currentTime = 0;
+            try {
+              await sound.play();
+              $scope.$apply(() => {
+                $scope.audioAllowed = true;
+              });
+              console.log('Audio successfully initialized by user gesture.');
+
+              const promptElement = document.getElementById('soundPrompt');
+              if (promptElement) {
+                promptElement.classList.add('fade-out');
+                setTimeout(() => {
+                  $scope.$apply(() => {
+                    $scope.audioAllowed = true;
+                  });
+                }, 1000);
+              }
+            } catch (err) {
+              console.warn('Initial user-triggered audio play failed:', err);
+            }
+          }
+        };
+
+        $scope.loadMessage = async function() {
+          try {
+            const res = await $http.get('/api/message');
+            const newMessage = res.data.message.trim();
+
+            if (newMessage.length > 0) {
+              $scope.currentMessage = newMessage;
+              $scope.showMessageOverlay = true;
+
+              if (newMessage !== lastMessage) {
+                const sound = document.getElementById('msgSound');
+                if (sound && $scope.audioAllowed) {
+                  sound.currentTime = 0;
+                  try {
+                    await sound.play();
+                    console.log('Sound played for new message:', newMessage);
+                  } catch (err) {
+                    console.warn('Programmatic sound playback failed (after initial gesture):', err);
+                  }
+                } else if (newMessage !== lastMessage && !$scope.audioAllowed) {
+                    console.log('New message, but sound not played. Audio not yet allowed by user. Prompt visible.');
+                }
+                lastMessage = newMessage;
+              }
+
+              if (hideTimeout) clearTimeout(hideTimeout);
+              hideTimeout = setTimeout(() => {
+                $scope.$apply(function() {
+                  $scope.showMessageOverlay = false;
+                  $scope.currentMessage = "Waiting for message...";
+                  lastMessage = "";
+                });
+              }, 10000);
+            } else {
+              $scope.showMessageOverlay = false;
+              $scope.currentMessage = "Waiting for message...";
+              lastMessage = "";
+              if (hideTimeout) clearTimeout(hideTimeout);
+            }
+          } catch (err) {
+            console.error("Error fetching message:", err);
+            $scope.currentMessage = "Error loading message: Please check connection.";
+            $scope.showMessageOverlay = true;
+          }
+        };
+
+        $scope.loadMessage();
+        const messageInterval = $interval($scope.loadMessage, 20);
+
+        const viewerFrameReloadInterval = $interval(function() {
+          const viewerFrame = document.getElementById('viewerFrame');
+          if (viewerFrame && viewerFrame.contentWindow) {
+            viewerFrame.contentWindow.location.reload();
+            console.log('Viewer iframe reloaded at', new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
+          }
+        }, 60000);
+
+        $scope.$on('$destroy', function() {
+          $interval.cancel(messageInterval);
+          $interval.cancel(viewerFrameReloadInterval);
+          if (hideTimeout) clearTimeout(hideTimeout);
+          console.log('MainController scope destroyed. Intervals canceled.');
+        });
+      });
+  </script>
+      <script src="server_endpoints.js"></script>
+    <script>
+      // Use the URLs as needed
+      console.log("Redirecting to:", WebApps.message_board);
+      // window.location.href = WebApps.app2;
+    </script>
+</body>
+</html>

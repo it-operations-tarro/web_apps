@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedded Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #222; /* Just for visual separation of the main page */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #viewerFrame {
+            width: 100vw; /* Example: make the iframe take 90% of viewport width */
+            height: 100vh; /* Example: make the iframe take 90% of viewport height */
+            border: 2px solid #007bff; /* Optional: add a border to see the iframe */
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <iframe
+        id="viewerFrame"
+        src="viewer.html"  allow="autoplay; fullscreen; picture-in-picture"
+        frameborder="0"
+    ></iframe>
+</body>
+</html>

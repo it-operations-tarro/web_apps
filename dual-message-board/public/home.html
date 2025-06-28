@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard Page</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --dark-abyss-blue: #0A1128; /* Very dark blue */
+            --deep-void-blue: #1C2B40; /* Slightly lighter dark blue */
+            --electric-cyan: #00FFFF; /* Bright cyan */
+            --crisp-white: #FFFFFF; /* Pure white */
+            --shadow-color: rgba(0, 0, 0, 0.7);
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to right, var(--dark-abyss-blue), var(--deep-void-blue));
+        }
+
+        .dashboard-header {
+            width: 100%;
+            padding: 8px 16px; /* Reduced padding */
+            text-align: center;
+            color: var(--electric-cyan);
+            font-size: 1.5em; /* Reduced base font size for header */
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--electric-cyan);
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .dashboard-header h1 {
+            margin: 0;
+            font-size: 1.4em; /* Reduced h1 font size (relative to parent .dashboard-header) */
+            flex-grow: 1;
+        }
+
+        .logout-button {
+            background: linear-gradient(to right, #FF007F, #FF8C00);
+            color: var(--crisp-white);
+            border: none;
+            padding: 6px 12px; /* Reduced padding */
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em; /* Reduced font size */
+            transition: background 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 8px rgba(255, 0, 127, 0.4);
+        }
+
+        .logout-button:hover {
+            background: linear-gradient(to right, #FF8C00, #FF007F);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 0, 127, 0.6);
+        }
+
+        .dashboard-container {
+            display: flex;
+            width: 95%;
+            height: calc(95% - 60px); /* Adjusted height calc based on new header padding (10px top + 10px bottom + original margin-top 70px) -> 20px + 70px = 90px effectively, so 95% - 90px? Let's assume original 70px still relevant for total height. If header is 40px tall (20 padding + ~20 font-size), then 100vh - 40px -> calc(95% - 40px) is safer. Let's recalculate based on typical header height and provided padding. Padding is 10px top/bottom. If font is 1.4em, let's say header is 40-50px tall. So margin-top 50px, height calc(95% - 50px)
+            */
+            gap: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px var(--shadow-color);
+            padding: 20px;
+            box-sizing: border-box;
+            border: 2px solid var(--electric-cyan);
+            margin-top: 50px; /* Adjusted margin-top to account for smaller header */
+        }
+
+        iframe {
+            flex: 1;
+            height: 100%;
+            border: none;
+            border-radius: 10px;
+            background-color: #1A1A2E;
+            box-shadow: 0 8px 25px var(--shadow-color);
+            transition: transform 0.2s ease-in-out;
+            border: 1px solid var(--electric-cyan);
+        }
+
+        iframe:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px var(--shadow-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <button class="logout-button" onclick="logout()">Logout</button>
+    </div>
+    <div class="dashboard-container">
+        <iframe src="http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3004/admin.html"></iframe>
+        <iframe src="http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3005/admin.html"></iframe>
+    </div>
+
+    <script>
+        // === 1. Client-Side Authentication Check on Page Load ===
+        document.addEventListener('DOMContentLoaded', async (event) => {
+            window.onpageshow = function(event) {
+                if (event.persisted) {
+                    console.log("HOMEPAGE: Page restored from BFCache (back/forward button). Forcing reload.");
+                    window.location.reload();
+                }
+            };
+
+            try {
+                const res = await fetch('/api/check-session', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (res.status === 401) {
+                    console.warn("HOMEPAGE: Server responded with 401 Unauthorized. Redirecting to login page.");
+                    window.location.replace("login.html?error=Session expired or not authorized.");
+                    return;
+                }
+
+                const data = await res.json();
+
+                if (!data.loggedIn) {
+                    console.warn("HOMEPAGE: User not logged in according to server. Redirecting to login page.");
+                    window.location.replace("login.html?error=Please log in again.");
+                } else {
+                    console.info("HOMEPAGE: User is logged in:", data.user);
+                }
+            } catch (err) {
+                console.error("HOMEPAGE: Network or server error during session check:", err);
+                window.location.replace("login.html?error=Network error or server unavailable. Please try again.");
+            }
+        });
+
+        // === 2. Logout Function ===
+        async function logout() {
+            console.log("HOMEPAGE: Logout function called.");
+            try {
+                const res = await fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
+                    throw new Error(`Server error during logout: ${res.status} - ${errorData.message}`);
+                }
+
+                const data = await res.json();
+
+                if (data.success) {
+                    console.log("HOMEPAGE: Server-side session for Port 3003 destroyed. Redirecting to login page.");
+                    window.location.replace("login.html");
+                } else {
+                    console.error("HOMEPAGE: Server-side logout failed:", data.message);
+                    alert("Logout failed: " + (data.message || "Please check console."));
+                    window.location.replace("login.html");
+                }
+            } catch (err) {
+                console.error("HOMEPAGE: Network or server error during logout:", err);
+                alert("A network error occurred during logout. Please check connection and try again.");
+                window.location.replace("login.html");
+            }
+        }
+    </script>
+    <script src="server_endpoints.js"></script> 
+    <script>
+      // You can remove this script block if you don't use these console.logs anymore
+      // or if server_endpoints.js is no longer needed.
+      console.log("Redirecting to:", typeof WebApps !== 'undefined' ? WebApps.dual_dashboard : 'WebApps not defined');
+      // window.location.href = WebApps.app2; // This line is commented out, so it won't execute.
+    </script>
+</body>
+</html>

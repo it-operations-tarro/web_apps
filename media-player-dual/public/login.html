@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>High-Tech Login</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000; /* Dark background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .login-box {
+            background: rgba(0, 0, 0, 0.7); /* Semi-transparent black */
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 255, 0, 0.3); /* Green glow */
+            width: 350px;
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(0, 255, 0, 0.1) 10px,
+                rgba(0, 255, 0, 0.1) 20px
+            );
+            z-index: -1;
+            opacity: 0.8;
+            animation: moveGrid 10s linear infinite;
+        }
+
+        @keyframes moveGrid {
+            from { background-position: 0 0; }
+            to { background-position: 100% 100%; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            text-align: center;
+            color: #00ff00; /* Green text */
+            margin-bottom: 2rem;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group input {
+            width: calc(100% - 1rem);
+            padding: 0.8rem 0.5rem;
+            font-size: 1.1rem;
+            border: 1px solid #00ff00; /* Green border */
+            border-radius: 5px;
+            outline: none;
+            background: transparent;
+            color: #fff; /* White text */
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .input-group input:focus {
+            border-color: #00ffff; /* Cyan focus border */
+        }
+
+         .input-group label {
+            position: absolute;
+            top: 0.8rem;
+            left: 0.5rem;
+            color: #888;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .input-group input:focus + label,
+        .input-group input:not(:placeholder-shown) + label {
+            top: -1.2rem;
+            font-size: 0.85rem;
+            color: #00ff00;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            color: #fff; /* White text */
+        }
+
+        .remember-me input[type="checkbox"] {
+            margin-right: 0.5rem;
+            transform: scale(1.2);
+            accent-color: #00ff00; /* Green checkbox */
+        }
+
+        button {
+            width: 100%;
+            padding: 0.9rem;
+            background: linear-gradient(to right, #00ff00, #00aaff); /* Green to Cyan gradient */
+            color: white;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.5); /* Green shadow */
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(to right, #00aaff, #00ffff); /* Cyan to Light Cyan gradient */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 0, 0.7); /* Stronger Green shadow */
+        }
+
+        .error {
+            color: #ff4d4d; /* Red error text */
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <h2>Login</h2>
+        <div class="input-group">
+            <input type="text" id="username" placeholder=" " />
+            <label for="username">Username</label>
+        </div>
+        <div class="input-group">
+            <input type="password" id="password" placeholder=" " />
+            <label for="password">Password</label>
+        </div>
+        <div class="remember-me">
+            <input type="checkbox" id="rememberMe">
+            <label for="rememberMe">Remember me</label>
+        </div>
+        <button onclick="login()">Login</button>
+        <div id="errorMsg" class="error"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const usernameInput = document.getElementById("username");
+            const rememberMeCheckbox = document.getElementById("rememberMe");
+
+            // Prevent going back to login page after successful login from history
+            // This is client-side only and can be bypassed, server-side is key.
+            if (window.history && window.history.pushState) {
+                // If this page was reached via history.pushState, and we're not logged in,
+                // replace the current state to prevent easy back navigation.
+                // This is a subtle attempt to prevent users from seeing the login page
+                // in their history once they've authenticated.
+                if (window.location.pathname.endsWith("login.html") || window.location.pathname.endsWith("/")) {
+                    window.history.replaceState(null, document.title, window.location.href);
+                }
+            }
+
+
+            // Load username from cookie if "remember me" was checked
+            const savedUsername = getCookie("username");
+            if (savedUsername) {
+                usernameInput.value = savedUsername;
+                rememberMeCheckbox.checked = true;
+                // Trigger label animation if a value is present
+                if (usernameInput.value !== "") {
+                    usernameInput.classList.add('not-empty'); // Add a class to simulate placeholder-shown
+                    usernameInput.nextElementSibling.style.top = '-1.2rem';
+                    usernameInput.nextElementSibling.style.fontSize = '0.85rem';
+                    usernameInput.nextElementSibling.style.color = '#00ff00';
+                }
+            }
+        });
+
+        function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const rememberMe = document.getElementById("rememberMe").checked;
+            const errorMsg = document.getElementById("errorMsg");
+
+            // Clear previous error message
+            errorMsg.textContent = "";
+
+            // Simple client-side validation
+            if (!username || !password) {
+                errorMsg.textContent = "Please enter both username and password.";
+                return;
+            }
+
+            // --- IMPORTANT: This is a client-side only example. ---
+            // --- In a real application, this authentication would happen on the server. ---
+            // This 'if' block simulates a successful authentication.
+            // In a real app, you'd send a request to your server here:
+            // fetch('/api/login', { method: 'POST', body: JSON.stringify({ username, password }) })
+            //   .then(response => { if (response.ok) { /* handle success */ } else { /* handle error */ } })
+            //   .catch(error => console.error('Login failed:', error));
+
+            if (username === "admin" && password === "password123") {
+                if (rememberMe) {
+                    setCookie("username", username, 7); // Store username for 7 days
+                    console.log("LOGIN: Cookie set for username:", username); // Debugging
+                } else {
+                    deleteCookie("username"); // Delete username cookie if not remembered
+                    console.log("LOGIN: Username cookie deleted (rememberMe was false)."); // Debugging
+                }
+                console.log("LOGIN: Current cookies after setting/deleting:", document.cookie); // Debugging
+
+
+                // Redirect and replace history state to prevent going back to login
+                if (window.history && window.history.replaceState) {
+                    // This tells the browser to go to homepage.html AND replace the current history entry
+                    window.history.replaceState(null, null, 'homepage.html');
+                    window.location.replace('homepage.html'); // Use replace to prevent back navigation
+                } else {
+                    window.location.href = "homepage.html"; // Fallback for older browsers
+                }
+            } else {
+                errorMsg.textContent = "Invalid username or password.";
+            }
+        }
+
+        // --- Cookie Functions ---
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            // IMPORTANT: path=/ makes the cookie available across the entire domain.
+            // For local testing, ensure your server's domain matches what's expected.
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function deleteCookie(name) {
+            // Set Max-Age to a past date to delete the cookie immediately.
+            document.cookie = name + '=; Max-Age=-99999999; path=/';
+        }
+    </script>
+           <script src="server_endpoints.js"></script>
+    <script>
+      // Use the URLs as needed
+      console.log("Redirecting to:", WebApps.media_dual);
+      // window.location.href = WebApps.app2;
+    </script>
+
+</body>
+</html>

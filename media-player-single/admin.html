@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Playlist Manager</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f3f6fa;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #004aad;
+    }
+
+    .section {
+      background: white;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    input, button, select {
+      padding: 0.5rem;
+      margin: 0.2rem 0;
+      font-size: 1rem;
+    }
+
+    button {
+      cursor: pointer;
+      background: #004aad;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background: #003380;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    li {
+      padding: 0.5rem;
+      background: #eef;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .actions button {
+      margin-left: 0.3rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Playlist Admin Dashboard</h1>
+
+  <div class="section">
+    <h2>Create Playlist</h2>
+    <input type="text" id="newPlaylist" placeholder="Enter playlist name" />
+    <button onclick="createPlaylist()">Create</button>
+  </div>
+
+  <div class="section">
+    <h2>Upload Files</h2>
+    <select id="uploadPlaylist"></select><br />
+    <input type="file" id="uploadFiles" multiple />
+    <button onclick="uploadFiles()">Upload</button>
+  </div>
+
+  <div class="section">
+    <h2>All Playlists</h2>
+    <ul id="playlistList"></ul>
+  </div>
+
+  <script>
+    async function loadPlaylists() {
+      const res = await fetch('/api/playlists');
+      const playlists = await res.json();
+      const list = document.getElementById('playlistList');
+      const dropdown = document.getElementById('uploadPlaylist');
+
+      list.innerHTML = '';
+      dropdown.innerHTML = '';
+
+      playlists.forEach(({ name }) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span>${name}</span>
+          <div class="actions">
+            <button onclick="triggerPlay('${name}')">▶️ Play</button>
+            <button onclick="renamePlaylist('${name}')">✏️ Rename</button>
+            <button onclick="deletePlaylist('${name}')">🗑️ Delete</button>
+          </div>
+        `;
+        list.appendChild(li);
+
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        dropdown.appendChild(opt);
+      });
+    }
+
+    async function createPlaylist() {
+      const name = document.getElementById('newPlaylist').value;
+      if (!name) return alert('Enter a name');
+
+      const res = await fetch('/api/playlists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+
+      if (res.ok) {
+        document.getElementById('newPlaylist').value = '';
+        loadPlaylists();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed');
+      }
+    }
+
+    async function uploadFiles() {
+      const playlist = document.getElementById('uploadPlaylist').value;
+      const files = document.getElementById('uploadFiles').files;
+      if (!playlist || !files.length) return alert('Select playlist and files');
+
+      const formData = new FormData();
+      for (let file of files) formData.append('files', file);
+
+      const res = await fetch(`/api/playlists/${playlist}/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        alert('Uploaded successfully');
+        document.getElementById('uploadFiles').value = '';
+      } else {
+        alert('Upload failed');
+      }
+    }
+
+    async function deletePlaylist(name) {
+      if (!confirm(`Delete ${name}?`)) return;
+      await fetch(`/api/playlists/${name}`, { method: 'DELETE' });
+      loadPlaylists();
+    }
+
+    async function renamePlaylist(oldName) {
+      const newName = prompt('New playlist name:', oldName);
+      if (!newName || newName === oldName) return;
+
+      await fetch(`/api/playlists/${oldName}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newName })
+      });
+
+      loadPlaylists();
+    }
+
+    async function triggerPlay(name) {
+      await fetch(`/api/playlists/${name}/trigger`, { method: 'POST' });
+      alert(`Triggered viewer for ${name}`);
+    }
+
+    loadPlaylists();
+  </script>
+</body>
+</html>

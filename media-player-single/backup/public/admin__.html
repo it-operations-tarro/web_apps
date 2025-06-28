@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Playlist Admin Dashboard</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <style>
+    :root {
+      --primary-color: #004aad;
+      --accent-color: #00c897;
+      --accent-hover: #009b75;
+      --bg-color: #f3f6fa;
+      --text-color: #333;
+      --tile-bg: #fff;
+      --tile-shadow: rgba(0, 0, 0, 0.08);
+      --border-color: #ccc;
+      --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      --border-radius: 12px;
+      --transition-speed: 0.3s;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-family);
+      background: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    header {
+      background: var(--primary-color);
+      color: white;
+      padding: 1.25rem 2rem;
+      font-size: 1.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      user-select: none;
+    }
+
+    main.dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .tile {
+      background: var(--tile-bg);
+      padding: 2rem 1.75rem;
+      border-radius: var(--border-radius);
+      box-shadow: 0 6px 20px var(--tile-shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.2s ease, box-shadow var(--transition-speed);
+    }
+
+    .tile:hover,
+    .tile:focus-within {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px var(--tile-shadow);
+      outline: none;
+    }
+
+    .tile i {
+      font-size: 3rem;
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+      user-select: none;
+    }
+
+    .tile h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.4rem;
+      color: var(--primary-color);
+      text-align: center;
+    }
+
+    input[type="text"],
+    select,
+    input[type="file"] {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      margin-top: 1rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1.5px solid var(--border-color);
+      transition: border-color var(--transition-speed);
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    input[type="file"]:focus {
+      border-color: var(--accent-color);
+      outline: none;
+    }
+
+    button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.75rem 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: white;
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color var(--transition-speed);
+      user-select: none;
+    }
+
+    button:hover,
+    button:focus {
+      background-color: var(--accent-hover);
+      outline: none;
+    }
+
+    .tile.manage {
+      grid-column: span 2;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* Minimalistic playlist list style */
+    ul.playlist-list {
+      margin: 0.5rem 0 0 0;
+      padding: 0;
+      list-style: none;
+      width: 100%;
+      max-height: 320px;
+      overflow-y: auto;
+      border-radius: var(--border-radius);
+      background: #eef4fc;
+      box-shadow: inset 0 0 5px rgba(0, 74, 173, 0.1);
+      font-size: 0.9rem;
+      color: var(--primary-color);
+    }
+
+    li.playlist {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      user-select: none;
+    }
+
+    li.playlist:last-child {
+      border-bottom: none;
+    }
+
+    li.playlist span.name {
+      flex-grow: 1;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+
+    li.playlist span.name:focus {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+
+    div.actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center; /* Center buttons */
+      align-items: center;
+    }
+
+    div.actions button {
+      background: var(--primary-color);
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      font-size: 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      border: none;
+      transition: background-color var(--transition-speed);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    div.actions button:hover,
+    div.actions button:focus {
+      background: #002d72;
+      outline: none;
+    }
+
+    div.actions button[aria-label="Rename"]::before {
+      content: "\f044"; /* FontAwesome pencil icon */
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      color: white;
+    }
+
+    div.actions button[aria-label="Delete"]::before {
+      content: "\f2ed"; /* FontAwesome trash icon */
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      color: white;
+    }
+
+    div.actions button[aria-label="Trigger"]::before {
+      content: "\f04b"; /* FontAwesome play icon */
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      color: white;
+    }
+
+    /* Preview box */
+    #previewBox {
+      position: absolute;
+      background: var(--tile-bg);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 320px;
+      pointer-events: none;
+      display: none;
+      z-index: 1000;
+      font-size: 0.9rem;
+      color: var(--primary-color);
+      user-select: none;
+    }
+
+    /* Scrollbar for playlist list */
+    ul.playlist-list::-webkit-scrollbar {
+      width: 8px;
+    }
+    ul.playlist-list::-webkit-scrollbar-thumb {
+      background-color: var(--accent-color);
+      border-radius: 10px;
+    }
+
+    /* Modal overlay */
+    #deleteModalOverlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1100;
+    }
+
+    /* Modal box */
+    #deleteModal {
+      background: var(--tile-bg);
+      border-radius: var(--border-radius);
+      padding: 1.5rem 2rem;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      color: var(--primary-color);
+      max-height: 80vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #deleteModal h3 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+
+    #deleteModal ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex-grow: 1;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: #eef4fc;
+    }
+
+    #deleteModal ul li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+      user-select: none;
+    }
+
+    #deleteModal ul li:last-child {
+      border-bottom: none;
+    }
+
+    #deleteModal ul li button {
+      background: transparent;
+      border: none;
+      color: var(--accent-color);
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-weight: 900;
+      user-select: none;
+      padding: 0;
+      line-height: 1;
+      transition: color var(--transition-speed);
+    }
+
+    #deleteModal ul li button:hover {
+      color: var(--accent-hover);
+    }
+
+    #deleteModalActions {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    #deleteModalActions button {
+      width: auto;
+      padding: 0.5rem 1.25rem;
+      font-weight: 700;
+      border-radius: 8px;
+    }
+
+    #deleteModalCloseBtn {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    #deleteModalConfirmBtn {
+      background-color: var(--accent-color);
+      color: white;
+    }
+
+    #deleteModalCloseBtn:hover,
+    #deleteModalCloseBtn:focus {
+      background-color: #002d72;
+      outline: none;
+    }
+
+    #deleteModalConfirmBtn:hover,
+    #deleteModalConfirmBtn:focus {
+      background-color: var(--accent-hover);
+      outline: none;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <i class="fas fa-music" aria-hidden="true"></i>
+    <span>Playlist Admin Dashboard</span>
+  </header>
+
+  <main class="dashboard" role="main" aria-label="Playlist management dashboard">
+    <section class="tile" aria-labelledby="createPlaylistLabel" tabindex="0">
+      <i class="fas fa-plus-circle" aria-hidden="true"></i>
+      <h2 id="createPlaylistLabel">Create Playlist</h2>
+      <input
+        type="text"
+        id="playlistName"
+        placeholder="Enter playlist name"
+        aria-describedby="createPlaylistDesc"
+      />
+      <button id="createBtn" type="button">Create</button>
+    </section>
+
+    <section class="tile" aria-labelledby="uploadFilesLabel" tabindex="0">
+      <i class="fas fa-upload" aria-hidden="true"></i>
+      <h2 id="uploadFilesLabel">Upload Files</h2>
+      <select id="uploadSelect" aria-label="Select playlist to upload files" aria-required="true"></select>
+      <input type="file" id="uploadFiles" multiple aria-label="Select files to upload" />
+      <button id="uploadBtn" type="button">Upload</button>
+    </section>
+
+    <!-- Minimalistic Manage Playlists Section -->
+    <section class="tile manage" aria-labelledby="managePlaylistsLabel" tabindex="0">
+      <i class="fas fa-list" aria-hidden="true"></i>
+      <h2 id="managePlaylistsLabel">Manage Playlists</h2>
+      <ul id="playlistList" class="playlist-list" role="list" aria-live="polite" aria-relevant="additions removals"></ul>
+    </section>
+  </main>
+
+  <!-- Preview box for hover -->
+  <div id="previewBox" role="tooltip" aria-hidden="true"></div>
+
+  <!-- Delete Modal -->
+  <div id="deleteModalOverlay" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle" tabindex="-1">
+    <div id="deleteModal">
+      <h3 id="deleteModalTitle">Delete Playlist Items</h3>
+      <p id="deletePlaylistName" style="text-align:center; font-weight:600; margin-bottom: 1rem;"></p>
+      <ul id="deleteItemList" aria-live="polite" aria-relevant="additions removals"></ul>
+      <div id="deleteModalActions">
+        <button id="deleteModalCloseBtn" type="button">Close</button>
+        <button id="deleteModalConfirmBtn" type="button">Delete Playlist</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="previewBox"></div>
+
+  <script>
+ async function fetchPlaylists() {
+  try {
+    const res = await fetch('/api/playlists');
+    const playlists = await res.json();
+
+    // Sort playlists from latest to oldest by creation date or any timestamp property
+    // Assuming each playlist object has a 'createdAt' ISO timestamp string
+    // If your API doesn't provide timestamps, but returns in chronological order, you can just reverse:
+    playlists.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // If no 'createdAt' property, use:
+    // playlists.reverse();
+
+    const list = document.getElementById('playlistList');
+    const select = document.getElementById('uploadSelect');
+    list.innerHTML = '';
+    select.innerHTML = '';
+
+    playlists.forEach(p => {
+      const li = document.createElement('li');
+      li.className = 'playlist';
+
+      li.innerHTML = `
+        <span 
+          onmouseenter="showPreview(event, '${p.name}')"
+          onmouseleave="hidePreview()"
+          onmousemove="movePreview(event)"
+          title="Hover to preview"
+        ><b>${p.name}</b></span>
+        <div>
+          <button onclick="renamePlaylist('${p.name}')">Rename</button>
+          <button onclick="deletePlaylist('${p.name}')">Delete</button>
+          <button onclick="triggerPlaylist('${p.name}')">Trigger</button>
+        </div>
+      `;
+      list.appendChild(li);
+
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = p.name;
+      select.appendChild(opt);
+    });
+
+    // Set default selected playlist to the newest (first) playlist
+    if (playlists.length > 0) {
+      select.value = playlists[0].name;
+    }
+
+  } catch (err) {
+    console.error('Error fetching playlists:', err);
+  }
+}
+
+    async function createPlaylist() {
+      const name = document.getElementById('playlistName').value.trim();
+      if (!name) {
+        alert('Please enter a playlist name.');
+        return;
+      }
+      try {
+        await fetch('/api/playlists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        document.getElementById('playlistName').value = '';
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to create playlist.');
+        console.error(err);
+      }
+    }
+
+    async function deletePlaylist(name) {
+      if (!confirm(`Are you sure you want to delete playlist "${name}"?`)) return;
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to delete playlist.');
+        console.error(err);
+      }
+    }
+
+    async function renamePlaylist(oldName) {
+      const newName = prompt('New name:', oldName);
+      if (!newName || newName === oldName) return;
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(oldName)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newName })
+        });
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to rename playlist.');
+        console.error(err);
+      }
+    }
+
+    async function triggerPlaylist(name) {
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(name)}/trigger`, { method: 'POST' });
+        alert(`Playlist "${name}" triggered!`);
+      } catch (err) {
+        alert('Failed to trigger playlist.');
+        console.error(err);
+      }
+    }
+
+    async function uploadFiles() {
+      const playlist = document.getElementById('uploadSelect').value;
+      const files = document.getElementById('uploadFiles').files;
+      if (!playlist) {
+        alert('Please select a playlist to upload files to.');
+        return;
+      }
+      if (files.length === 0) {
+        alert('Please select files to upload.');
+        return;
+      }
+      const formData = new FormData();
+      for (const file of files) formData.append('files', file);
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(playlist)}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        alert('Files uploaded successfully!');
+        document.getElementById('uploadFiles').value = '';
+      } catch (err) {
+        alert('Upload failed.');
+        console.error(err);
+      }
+    }
+
+    // Preview box logic
+    let previewTimeout;
+    async function showPreview(event, playlistName) {
+      clearTimeout(previewTimeout);
+      const box = document.getElementById('previewBox');
+      box.style.display = 'block';
+      box.style.left = (event.pageX + 15) + 'px';
+      box.style.top = (event.pageY + 15) + 'px';
+      box.textContent = 'Loading...';
+      try {
+        const res = await fetch(`/api/playlists/${encodeURIComponent(playlistName)}/preview`);
+        const data = await res.json();
+        if (data.files && data.files.length > 0) {
+          box.innerHTML = `<b>Playlist: ${playlistName}</b><ul>` +
+            data.files.map(f => `<li>${f}</li>`).join('') + '</ul>';
+        } else {
+          box.textContent = 'No files in playlist.';
+        }
+      } catch {
+        box.textContent = 'Failed to load preview.';
+      }
+    }
+
+    function movePreview(event) {
+      const box = document.getElementById('previewBox');
+      box.style.left = (event.pageX + 15) + 'px';
+      box.style.top = (event.pageY + 15) + 'px';
+    }
+
+    function hidePreview() {
+      const box = document.getElementById('previewBox');
+      previewTimeout = setTimeout(() => {
+        box.style.display = 'none';
+      }, 300);
+    }
+
+    // Initialize
+    fetchPlaylists();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Playlist Manager</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 2rem;
+      background: #f7f9fc;
+      color: #333;
+    }
+
+    h1 {
+      color: #0056b3;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    .container {
+      display: flex;
+      gap: 2rem;
+      max-width: 900px;
+      margin-top: 1rem;
+    }
+
+    /* Left Pane - Create Playlist */
+    .left-pane {
+      flex: 1;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .left-pane input {
+      width: calc(100% - 90px);
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1.5px solid #ccc;
+      border-radius: 6px 0 0 6px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .left-pane input:focus {
+      border-color: #0056b3;
+    }
+    .left-pane button {
+      padding: 0.55rem 1rem;
+      border: none;
+      background-color: #0056b3;
+      color: white;
+      font-weight: 600;
+      border-radius: 0 6px 6px 0;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .left-pane button:hover {
+      background-color: #003d80;
+    }
+
+    /* Right Pane - Existing Playlists */
+    .right-pane {
+      flex: 1.5;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .right-pane h2 {
+      margin-top: 0;
+      color: #0056b3;
+      font-weight: 700;
+    }
+
+    #playlistList {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 1rem;
+    }
+
+    .playlist {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1rem;
+      margin-bottom: 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: #fafafa;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+    .playlist:hover {
+      background-color: #e6f0ff;
+      box-shadow: 0 0 8px #cce0ff;
+    }
+    .playlist > span {
+      font-weight: 600;
+      cursor: pointer;
+      color: #0056b3;
+      user-select: none;
+    }
+    .playlist > div > button {
+      margin-left: 0.5rem;
+      background: #007bff;
+      border: none;
+      color: white;
+      padding: 0.35rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .playlist > div > button:hover {
+      background-color: #0056b3;
+    }
+
+    hr {
+      margin: 3rem 0 1rem 0;
+      border-color: #ddd;
+    }
+
+    /* Upload Section */
+    #uploadSection {
+      max-width: 850px;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 3rem;
+    }
+    #uploadSection h3 {
+      margin-bottom: 1rem;
+      color: #0056b3;
+      font-weight: 700;
+    }
+    #uploadSelect {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-right: 1rem;
+      border-radius: 6px;
+      border: 1.5px solid #ccc;
+      outline: none;
+      min-width: 150px;
+    }
+    #uploadFiles {
+      margin-right: 1rem;
+    }
+    #uploadSection button {
+      background-color: #28a745;
+      border: none;
+      color: white;
+      padding: 0.55rem 1.2rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #uploadSection button:hover {
+      background-color: #1e7e34;
+    }
+
+    /* Preview box */
+    #previewBox {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      display: none;
+      z-index: 1000;
+      max-width: 300px;
+      font-size: 0.9rem;
+      pointer-events: none;
+      color: #222;
+    }
+    #previewBox ul {
+      padding-left: 1.2rem;
+      margin: 0.3rem 0 0 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #previewBox ul li {
+      margin-bottom: 0.2rem;
+      list-style-type: disc;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Admin Playlist Manager</h1>
+
+  <div class="container">
+    <div class="left-pane">
+      <input id="playlistName" placeholder="New Playlist Name" autocomplete="off" />
+      <button onclick="createPlaylist()">Create</button>
+    </div>
+
+    <div class="right-pane">
+      <h2>Existing Playlists</h2>
+      <ul id="playlistList"></ul>
+    </div>
+  </div>
+
+  <div id="uploadSection">
+    <h3>Upload Files to Playlist</h3>
+    <select id="uploadSelect"></select>
+    <input type="file" id="uploadFiles" multiple />
+    <button onclick="uploadFiles()">Upload</button>
+  </div>
+
+  <div id="previewBox"></div>
+
+  <script>
+ async function fetchPlaylists() {
+  try {
+    const res = await fetch('/api/playlists');
+    const playlists = await res.json();
+
+    // Sort playlists from latest to oldest by creation date or any timestamp property
+    // Assuming each playlist object has a 'createdAt' ISO timestamp string
+    // If your API doesn't provide timestamps, but returns in chronological order, you can just reverse:
+    playlists.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // If no 'createdAt' property, use:
+    // playlists.reverse();
+
+    const list = document.getElementById('playlistList');
+    const select = document.getElementById('uploadSelect');
+    list.innerHTML = '';
+    select.innerHTML = '';
+
+    playlists.forEach(p => {
+      const li = document.createElement('li');
+      li.className = 'playlist';
+
+      li.innerHTML = `
+        <span 
+          onmouseenter="showPreview(event, '${p.name}')"
+          onmouseleave="hidePreview()"
+          onmousemove="movePreview(event)"
+          title="Hover to preview"
+        ><b>${p.name}</b></span>
+        <div>
+          <button onclick="renamePlaylist('${p.name}')">Rename</button>
+          <button onclick="deletePlaylist('${p.name}')">Delete</button>
+          <button onclick="triggerPlaylist('${p.name}')">Trigger</button>
+        </div>
+      `;
+      list.appendChild(li);
+
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = p.name;
+      select.appendChild(opt);
+    });
+
+    // Set default selected playlist to the newest (first) playlist
+    if (playlists.length > 0) {
+      select.value = playlists[0].name;
+    }
+
+  } catch (err) {
+    console.error('Error fetching playlists:', err);
+  }
+}
+
+    async function createPlaylist() {
+      const name = document.getElementById('playlistName').value.trim();
+      if (!name) {
+        alert('Please enter a playlist name.');
+        return;
+      }
+      try {
+        await fetch('/api/playlists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        document.getElementById('playlistName').value = '';
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to create playlist.');
+        console.error(err);
+      }
+    }
+
+    async function deletePlaylist(name) {
+      if (!confirm(`Are you sure you want to delete playlist "${name}"?`)) return;
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to delete playlist.');
+        console.error(err);
+      }
+    }
+
+    async function renamePlaylist(oldName) {
+      const newName = prompt('New name:', oldName);
+      if (!newName || newName === oldName) return;
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(oldName)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newName })
+        });
+        fetchPlaylists();
+      } catch (err) {
+        alert('Failed to rename playlist.');
+        console.error(err);
+      }
+    }
+
+    async function triggerPlaylist(name) {
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(name)}/trigger`, { method: 'POST' });
+        alert(`Playlist "${name}" triggered!`);
+      } catch (err) {
+        alert('Failed to trigger playlist.');
+        console.error(err);
+      }
+    }
+
+    async function uploadFiles() {
+      const playlist = document.getElementById('uploadSelect').value;
+      const files = document.getElementById('uploadFiles').files;
+      if (!playlist) {
+        alert('Please select a playlist to upload files to.');
+        return;
+      }
+      if (files.length === 0) {
+        alert('Please select files to upload.');
+        return;
+      }
+      const formData = new FormData();
+      for (const file of files) formData.append('files', file);
+      try {
+        await fetch(`/api/playlists/${encodeURIComponent(playlist)}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        alert('Files uploaded successfully!');
+        document.getElementById('uploadFiles').value = '';
+      } catch (err) {
+        alert('Upload failed.');
+        console.error(err);
+      }
+    }
+
+    // Preview box logic
+    let previewTimeout;
+    async function showPreview(event, playlistName) {
+      clearTimeout(previewTimeout);
+      const box = document.getElementById('previewBox');
+      box.style.display = 'block';
+      box.style.left = (event.pageX + 15) + 'px';
+      box.style.top = (event.pageY + 15) + 'px';
+      box.textContent = 'Loading...';
+      try {
+        const res = await fetch(`/api/playlists/${encodeURIComponent(playlistName)}/preview`);
+        const data = await res.json();
+        if (data.files && data.files.length > 0) {
+          box.innerHTML = `<b>Playlist: ${playlistName}</b><ul>` +
+            data.files.map(f => `<li>${f}</li>`).join('') + '</ul>';
+        } else {
+          box.textContent = 'No files in playlist.';
+        }
+      } catch {
+        box.textContent = 'Failed to load preview.';
+      }
+    }
+
+    function movePreview(event) {
+      const box = document.getElementById('previewBox');
+      box.style.left = (event.pageX + 15) + 'px';
+      box.style.top = (event.pageY + 15) + 'px';
+    }
+
+    function hidePreview() {
+      const box = document.getElementById('previewBox');
+      previewTimeout = setTimeout(() => {
+        box.style.display = 'none';
+      }, 300);
+    }
+
+    // Initialize
+    fetchPlaylists();
+  </script>
+
+</body>
+</html>

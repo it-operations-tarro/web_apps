@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Viewer</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%; width: 100%; background: black;
+      overflow: hidden;
+    }
+    #playerContainer {
+      width: 100vw;
+      height: 100vh;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+    video, iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: black;
+      display: block;
+      border: none;
+    }
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: black;
+    }
+    audio {
+      width: 100%;
+      height: auto; /* Audio doesn't need to fill height usually */
+      max-width: 80%; /* Don't make audio player too wide */
+    }
+    #startOverlay {
+      position: fixed; 
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      color: white;
+      font-size: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      z-index: 9999;
+      user-select: none;
+      /* Start hidden, but will show on autoplay fail */
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="playerContainer"></div>
+
+  <!-- Overlay to prompt user to press a key or click -->
+  <div id="startOverlay">
+    Press any button to start playback
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const container = document.getElementById('playerContainer');
+    const startOverlay = document.getElementById('startOverlay');
+
+    let currentFiles = []; // This will store file entry objects
+    let currentIndex = 0;
+    let currentPlaylist = null;
+    let pollingInterval = 5000; // Poll every 5 seconds
+    let pollTimer = null;
+    let currentMediaElement = null; // Currently playing media element
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const savedPlaylist = localStorage.getItem('lastPlaylist');
+      if (savedPlaylist) {
+        console.log(`[Viewer] Attempting to resume playlist: ${savedPlaylist}`);
+        currentPlaylist = savedPlaylist;
+        await loadPlaylistAndPlay(true);
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(checkForUpdates, pollingInterval);
+      } else {
+        container.innerHTML = '<p style="color:white; text-align:center;">Waiting for a playlist to be triggered from the admin dashboard...</p>';
+      }
+    });
+
+    socket.on('play', async (playlistName) => {
+      console.log(`[Viewer] Socket.IO 'play' event received for playlist: ${playlistName}`);
+      if (currentPlaylist !== playlistName) {
+        currentPlaylist = playlistName;
+        localStorage.setItem('lastPlaylist', playlistName);
+        await loadPlaylistAndPlay();
+      } else {
+        console.log(`[Viewer] Playlist ${playlistName} already playing. Refreshing content.`);
+        await loadPlaylistAndPlay(false, true);
+      }
+
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(checkForUpdates, pollingInterval);
+    });
+
+    async function loadPlaylistAndPlay(isInitialLoad = false, forceContentRefresh = false) {
+      if (!currentPlaylist) {
+        console.warn('[Viewer] No current playlist to load.');
+        container.innerHTML = '<p style="color:white; text-align:center;">No playlist selected.</p>';
+        return;
+      }
+      try {
+        const res = await fetch(`/api/playlists/${encodeURIComponent(currentPlaylist)}/preview?timestamp=${Date.now()}`);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || `Failed to fetch playlist data for ${currentPlaylist}`);
+        }
+        const data = await res.json();
+        const newFiles = data.files;
+
+        const contentChanged = !arraysEqual(newFiles, currentFiles, (a, b) => {
+            return a.filename === b.filename && a.mimetype === b.mimetype;
+        });
+
+        if (contentChanged || forceContentRefresh) {
+          console.log(`[Viewer] Playlist content updated for ${currentPlaylist}. Reloading.`);
+          currentFiles = newFiles;
+          currentIndex = 0;
+          playNext();
+        } else if (isInitialLoad && currentFiles.length > 0) {
+          playNext();
+        } else {
+          console.log(`[Viewer] Playlist ${currentPlaylist} content unchanged.`);
+        }
+
+        if (currentFiles.length === 0) {
+          container.innerHTML = `<p style="color:white; text-align:center;">Playlist '${currentPlaylist}' is empty.</p>`;
+        }
+
+      } catch (err) {
+        console.error(`[Viewer] Error loading playlist '${currentPlaylist}':`, err);
+        container.innerHTML = `<p style="color:red; text-align:center;">Error loading playlist '${currentPlaylist}': ${err.message}</p>`;
+      }
+    }
+
+    async function checkForUpdates() {
+      if (!currentPlaylist) return;
+      try {
+        const res = await fetch(`/api/playlists/${encodeURIComponent(currentPlaylist)}/preview?timestamp=${Date.now()}`);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || `Failed to fetch playlist update for ${currentPlaylist}`);
+        }
+        const data = await res.json();
+        const newFiles = data.files;
+
+        if (!arraysEqual(newFiles, currentFiles, (a, b) => a.filename === b.filename && a.mimetype === b.mimetype)) {
+          console.log(`[Viewer] Playlist '${currentPlaylist}' detected change, refreshing...`);
+          currentFiles = newFiles;
+          currentIndex = 0;
+          playNext();
+        }
+      } catch (err) {
+        console.error(`[Viewer] Error checking playlist update for '${currentPlaylist}':`, err);
+      }
+    }
+
+    function arraysEqual(a, b, comparator = (x, y) => x === y) {
+      if (a === b) return true;
+      if (a == null || b == null) return false;
+      if (a.length !== b.length) return false;
+
+      for (let i = 0; i < a.length; i++) {
+        if (!comparator(a[i], b[i])) return false;
+      }
+      return true;
+    }
+
+    function playNext() {
+      if (currentFiles.length === 0) {
+        container.innerHTML = `<p style="color:white; text-align:center;">Playlist '${currentPlaylist}' is empty.</p>`;
+        return;
+      }
+
+      if (currentMediaElement) {
+        currentMediaElement.pause && currentMediaElement.pause();
+        currentMediaElement = null;
+      }
+      container.innerHTML = '';
+
+      const fileEntry = currentFiles[currentIndex];
+      const mediaPath = `/Media/${currentPlaylist}/${fileEntry.filename}`;
+
+      console.log(`[Viewer] Playing: ${fileEntry.name || fileEntry.originalname} (Path: ${mediaPath}, Mime: ${fileEntry.mimetype})`);
+
+      const mimeType = fileEntry.mimetype;
+      let duration = 10000;
+
+      if (mimeType.startsWith('video/')) {
+        const video = document.createElement('video');
+        video.src = mediaPath;
+        video.controls = true;
+        video.autoplay = true;
+        video.loop = false;
+        video.muted = localStorage.getItem('userMuted') === 'true';
+        video.playsInline = true;
+        video.onended = () => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+        video.onvolumechange = () => {
+          localStorage.setItem('userMuted', video.muted);
+        };
+        video.onerror = (e) => {
+          console.error('Video playback error:', e, video.error);
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+
+        container.appendChild(video);
+        currentMediaElement = video;
+
+        video.play().then(() => {
+          startOverlay.style.display = 'none';
+        }).catch(err => {
+          console.warn('Video autoplay failed (user interaction required or permission issue):', err);
+          startOverlay.style.display = 'flex';
+          // We do NOT advance here, wait for user interaction
+        });
+
+      } else if (mimeType.startsWith('audio/')) {
+        const audio = document.createElement('audio');
+        audio.src = mediaPath;
+        audio.controls = true;
+        audio.autoplay = true;
+        audio.loop = false;
+        audio.muted = localStorage.getItem('userMuted') === 'true';
+        audio.onended = () => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+        audio.onvolumechange = () => {
+          localStorage.setItem('userMuted', audio.muted);
+        };
+        audio.onerror = (e) => {
+          console.error('Audio playback error:', e, audio.error);
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+
+        container.appendChild(audio);
+        currentMediaElement = audio;
+
+        audio.play().then(() => {
+          startOverlay.style.display = 'none';
+        }).catch(err => {
+          console.warn('Audio autoplay failed:', err);
+          startOverlay.style.display = 'flex';
+          // Wait for user interaction
+        });
+
+      } else if (mimeType.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = mediaPath;
+        img.onerror = () => {
+          console.error('Image failed to load:', mediaPath);
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+        container.appendChild(img);
+        currentMediaElement = img;
+
+        setTimeout(() => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        }, duration);
+
+        // For images, no autoplay issue, so hide overlay just in case
+        startOverlay.style.display = 'none';
+
+      } else if (mimeType === 'application/pdf') {
+        const iframe = document.createElement('iframe');
+        iframe.src = mediaPath;
+        iframe.onload = () => {
+          console.log(`[Viewer] PDF loaded: ${mediaPath}`);
+          setTimeout(() => {
+            currentIndex = (currentIndex + 1) % currentFiles.length;
+            playNext();
+          }, 15000);
+        };
+        iframe.onerror = (e) => {
+          console.error('PDF iframe load error:', e);
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+        container.appendChild(iframe);
+        currentMediaElement = iframe;
+
+        startOverlay.style.display = 'none';
+
+      } else {
+        console.warn('Unsupported file type or mimetype:', mimeType, fileEntry.originalname);
+        container.innerHTML = `<p style="color:white; text-align:center;">Unsupported file type: <br>${fileEntry.originalname || fileEntry.filename} (${mimeType})</p>`;
+        setTimeout(() => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        }, 5000);
+
+        startOverlay.style.display = 'none';
+      }
+    }
+
+    // Handle user interaction to start playback if autoplay failed
+    function userInteractionHandler() {
+      if (!currentMediaElement) return;
+      currentMediaElement.play().then(() => {
+        startOverlay.style.display = 'none';
+      }).catch(err => {
+        console.warn('Playback failed on user interaction:', err);
+      });
+    }
+
+    // Listen for any key, click, or touch event to start playback
+    startOverlay.addEventListener('click', userInteractionHandler);
+    window.addEventListener('keydown', userInteractionHandler);
+    window.addEventListener('touchstart', userInteractionHandler);
+  </script>
+         <script src="server_endpoints.js"></script>
+    <script>
+      // Use the URLs as needed
+      console.log("Redirecting to:", WebApps.media_dual);
+      // window.location.href = WebApps.app2;
+    </script>
+</body>
+</html>

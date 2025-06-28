@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📢 Message Broadcaster</title>
+    <style>
+        /* ... (Your existing CSS from messenger.html) ... */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            color: #333;
+        }
+
+        .topbar {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 999;
+        }
+
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #1f2937;
+            color: white;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        .quick-btn {
+            padding: 14px;
+            margin-bottom: 12px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: #4338ca;
+            transform: scale(1.02);
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .form-box {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 25px;
+            font-size: 26px;
+            color: #2d3748;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            font-size: 17px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: border 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #4f46e5;
+            outline: none;
+        }
+
+        button[type="submit"] {
+            padding: 14px 28px;
+            font-size: 17px;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #059669;
+            transform: scale(1.03);
+        }
+
+        .note {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #2563eb;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #status.show {
+            display: block;
+            opacity: 1;
+        }
+        
+        /* --- NEW CSS for Duration Input --- */
+        .duration-control {
+            margin-bottom: 20px;
+            color: #4a5568;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .duration-control input[type="number"] {
+            width: 80px;
+            padding: 8px 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-left: 8px;
+            text-align: center;
+        }
+        .duration-control input[type="number"]:focus {
+            border-color: #4f46e5;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="sidebar">
+        <h3>🚀 Quick Messages</h3>
+        <button class="quick-btn" onclick="sendQuick('‼️‼️ AHOD ‼️‼️')">All Hands on Deck</button>
+        <button class="quick-btn" onclick="sendQuick('‼️ Please help with MGR calls @ph_tl ‼️')">MGR Calls In Queue</button>
+        <button class="quick-btn" onclick="sendQuick('🚨🚨 SP Calls in Queue 🚨🚨')">SP Calls in Queue</button>
+        <button class="quick-btn" onclick="sendQuick('‼️‼️ 🦀Fiery Crab Calls in Queue🦀‼️‼️ ')">Fiery Crab Queue</button>
+        <button class="quick-btn" onclick="sendQuick('‼️ SME Calls in Queue ‼️')">SME Calls in Queue</button>
+        <button class="quick-btn" onclick="sendQuick('🍕🍕 Pizza Calls Please 🍕🍕')">Pizza Calls</button>
+    </div>
+
+    <div class="container">
+        <div class="form-box">
+            <h2>📢 Message Broadcaster</h2>
+            <form id="msgForm">
+                <input type="text" id="msgInput" placeholder="Type your message... (leave blank to clear)" />
+
+                <div class="duration-control">
+                    <label for="durationInput">Show for (seconds):</label>
+                    <input type="number" id="durationInput" value="15" min="5" max="300" />
+                </div>
+
+                <button type="submit">Send Message</button>
+            </form>
+            <div class="note">The message will be cleared automatically after the specified duration.</div>
+            <div id="status">Message sent!</div>
+        </div>
+        </div>
+
+    <script>
+        const status = document.getElementById('status');
+        const msgInput = document.getElementById('msgInput');
+        // --- Get the new duration input element ---
+        const durationInput = document.getElementById('durationInput');
+
+        // --- Session Check on Page Load (Unchanged) ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const checkSessionRes = await fetch('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/api/messenger_check_session', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                const sessionData = await checkSessionRes.json();
+                if (!sessionData.loggedIn) {
+                    console.log('Messenger session not active, redirecting to login page.');
+                    window.location.replace('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/login.html');
+                } else {
+                    console.log('Messenger session active:', sessionData.user, sessionData.role);
+                }
+            } catch (error) {
+                console.error('Error checking messenger session on page load:', error);
+                alert('Could not verify messenger login status. Redirecting to central login page.');
+                window.location.replace('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/login.html');
+            }
+        });
+        // --- END SESSION CHECK ---
+
+        // ===== MODIFIED JAVASCRIPT LOGIC START =====
+
+        document.getElementById('msgForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const msg = msgInput.value.trim();
+            // Read the duration value from the input field
+            const durationInSeconds = parseInt(durationInput.value, 10);
+            await sendMessage(msg, durationInSeconds);
+        });
+
+        // Update sendMessage to accept a duration. A default of 12 seconds is set for Quick Messages.
+        async function sendMessage(msg, durationInSeconds = 12) {
+            try {
+                await fetch('/api/message', { // This fetches from port 3001's server
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+
+                msgInput.value = '';
+                status.innerText = msg ? "✅ Message sent!" : "🧹 Message cleared.";
+                status.classList.add('show');
+                setTimeout(() => status.classList.remove('show'), 3000);
+
+                // Only set a timer to clear the message if a message was actually sent
+                if (msg) {
+                    // Convert the duration from seconds to milliseconds for setTimeout
+                    // Use a fallback of 12000ms if the input is invalid (e.g., NaN, less than 1)
+                    const clearDelay = (durationInSeconds && durationInSeconds > 0) ? durationInSeconds * 1000 : 12000;
+                    
+                    console.log(`Message will be cleared in ${clearDelay / 1000} seconds.`);
+
+                    setTimeout(async () => {
+                        await fetch('/api/message', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ message: "" })
+                        });
+                        console.log('Auto-clear message sent.');
+                    }, clearDelay);
+                }
+            } catch (err) {
+                status.innerText = "❌ Failed to send message!";
+                status.classList.add('show');
+                console.error(err);
+            }
+        }
+
+        function sendQuick(msg) {
+            // Quick messages will use the default duration (12 seconds) set in the sendMessage function
+            sendMessage(msg);
+        }
+
+        // ===== MODIFIED JAVASCRIPT LOGIC END =====
+
+        // --- LOGOUT FUNCTION (Unchanged) ---
+        async function logout() {
+            try {
+                const logoutRes = await fetch('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/api/messenger_logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const logoutData = await logoutRes.json();
+
+                if (logoutRes.ok && logoutData.success) {
+                    console.log('Successfully logged out from Messenger server (Port 3001).');
+                } else {
+                    console.error('Logout from messenger server failed:', logoutData.message || logoutRes.statusText);
+                    alert('Logout failed: ' + (logoutData.message || 'Please try again.'));
+                }
+                window.location.replace('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/login.html');
+
+            } catch (error) {
+                console.error('Network error during logout (attempting to reach messenger server):', error);
+                alert('A network error occurred during messenger logout. Redirecting to central login.');
+                window.location.replace('http://messageboard-svr-dgt1-1.prod.letsdowonders.io:3001/login.html');
+            }
+        }
+        // --- END LOGOUT FUNCTION ---
+
+    </script>
+    <script src="server_endpoints.js"></script>
+    <script>
+      // Use the URLs as needed
+       console.log("Redirecting to:", WebApps.message_board);
+      // window.location.href = WebApps.app2;
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Media Viewer</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    img, video {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <div id="viewer"></div>
+
+<script>
+  let files = [];
+  let currentIndex = 0;
+
+  async function fetchMedia() {
+    try {
+      const res = await fetch('/api/media');
+      files = await res.json();
+      if (files.length > 0) showNext();
+    } catch (err) {
+      console.error('Failed to fetch media:', err);
+    }
+  }
+
+  function showNext() {
+    if (files.length === 0) return;
+
+    const file = files[currentIndex];
+    const viewer = document.getElementById('viewer');
+    viewer.innerHTML = '';
+
+    const ext = file.split('.').pop().toLowerCase();
+    const url = `/media/${file}`;
+
+    if (['mp4', 'webm'].includes(ext)) {
+      const video = document.createElement('video');
+      video.src = url;
+      video.autoplay = true;
+      video.muted = true;
+      video.controls = false;
+
+      video.addEventListener('ended', () => {
+        currentIndex = (currentIndex + 1) % files.length;
+        showNext();
+      });
+
+      viewer.appendChild(video);
+    } else {
+      const img = document.createElement('img');
+      img.src = url;
+      viewer.appendChild(img);
+
+      setTimeout(() => {
+        currentIndex = (currentIndex + 1) % files.length;
+        showNext();
+      }, 30000); // Show image for 30 seconds
+    }
+  }
+
+  fetchMedia();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Viewer</title>
+  <style>
+    body { margin: 0; background: black; }
+    video, audio, img, iframe {
+      display: block;
+      width: 100%;
+      height: 100vh;
+      object-fit: contain;
+      background: black;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="playerContainer"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const container = document.getElementById('playerContainer');
+    let currentFiles = [];
+    let currentIndex = 0;
+    let playlistNameGlobal = null;
+    let timer = null;
+
+    socket.on('play', async (playlistName) => {
+      playlistNameGlobal = playlistName;
+      const res = await fetch(`/Media/${playlistName}/playlist.json`);
+      const data = await res.json();
+      currentFiles = data.files;
+      currentIndex = 0;
+      playNext();
+    });
+
+    function clearTimer() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+
+    function playNext() {
+      clearTimer();
+      if (currentFiles.length === 0 || !playlistNameGlobal) return;
+
+      const file = currentFiles[currentIndex];
+      const ext = file.split('.').pop().toLowerCase();
+      const mediaPath = `/Media/${playlistNameGlobal}/${file}`;
+      container.innerHTML = ''; // Clear previous
+
+      // Determine file type and display accordingly
+      if (['mp4', 'webm'].includes(ext)) {
+        // Video
+        const video = document.createElement('video');
+        video.src = mediaPath;
+        video.autoplay = true;
+        video.controls = true;
+        video.loop = false;
+        video.style.background = 'black';
+
+        video.onended = () => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+
+        container.appendChild(video);
+        video.play().catch(err => console.error('Autoplay failed:', err));
+      } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+        // Audio
+        const audio = document.createElement('audio');
+        audio.src = mediaPath;
+        audio.autoplay = true;
+        audio.controls = true;
+        audio.loop = false;
+
+        audio.onended = () => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+
+        container.appendChild(audio);
+        audio.play().catch(err => console.error('Autoplay failed:', err));
+      } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
+        // Image - show for 5 seconds then next
+        const img = document.createElement('img');
+        img.src = mediaPath;
+        container.appendChild(img);
+        timer = setTimeout(() => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        }, 5000);
+      } else if (ext === 'pdf') {
+        // PDF - embed iframe and show for 10 seconds then next
+        const iframe = document.createElement('iframe');
+        iframe.src = mediaPath;
+        iframe.style.background = 'white';
+        container.appendChild(iframe);
+        timer = setTimeout(() => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        }, 10000);
+      } else {
+        console.warn('Unsupported file:', file);
+        // Skip unsupported files immediately
+        currentIndex = (currentIndex + 1) % currentFiles.length;
+        playNext();
+      }
+    }
+  </script>
+</body>
+</html>

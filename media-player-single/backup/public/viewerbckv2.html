@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Viewer</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%; width: 100%; background: black;
+      overflow: hidden;
+    }
+    #playerContainer {
+      width: 100vw;
+      height: 100vh;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+    video, iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: black;
+      display: block;
+      border: none;
+    }
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: black;
+    }
+    audio {
+      width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="playerContainer"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const container = document.getElementById('playerContainer');
+
+    let currentFiles = [];
+    let currentIndex = 0;
+    let currentPlaylist = null;
+    let pollingInterval = 10000;
+    let pollTimer = null;
+
+    // Auto-play on browser refresh if a previous playlist exists
+    window.addEventListener('DOMContentLoaded', async () => {
+      const savedPlaylist = localStorage.getItem('lastPlaylist');
+      if (savedPlaylist) {
+        currentPlaylist = savedPlaylist;
+        await loadPlaylistAndPlay();
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(checkForUpdates, pollingInterval);
+      }
+    });
+
+    // When a new playlist is triggered via socket
+    socket.on('play', async (playlistName) => {
+      currentPlaylist = playlistName;
+      localStorage.setItem('lastPlaylist', playlistName); // Save for refresh
+      await loadPlaylistAndPlay();
+
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(checkForUpdates, pollingInterval);
+    });
+
+    async function loadPlaylistAndPlay() {
+      try {
+        const res = await fetch(`/Media/${currentPlaylist}/playlist.json?timestamp=${Date.now()}`);
+        const data = await res.json();
+
+        const newFiles = data.files;
+        if (!arraysEqual(newFiles, currentFiles)) {
+          currentFiles = newFiles;
+          currentIndex = 0;
+          playNext();
+        }
+      } catch (err) {
+        console.error('Error loading playlist:', err);
+      }
+    }
+
+    async function checkForUpdates() {
+      try {
+        const res = await fetch(`/Media/${currentPlaylist}/playlist.json?timestamp=${Date.now()}`);
+        const data = await res.json();
+        const newFiles = data.files;
+        if (!arraysEqual(newFiles, currentFiles)) {
+          console.log('Playlist changed, refreshing...');
+          currentFiles = newFiles;
+          currentIndex = 0;
+          playNext();
+        }
+      } catch (err) {
+        console.error('Error checking playlist update:', err);
+      }
+    }
+
+    function arraysEqual(a, b) {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+      }
+      return true;
+    }
+
+    function playNext() {
+      if (currentFiles.length === 0) return;
+
+      const file = currentFiles[currentIndex];
+      const ext = file.split('.').pop().toLowerCase();
+      const mediaPath = `/Media/${currentPlaylist}/${file}`;
+      container.innerHTML = '';
+
+      if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) {
+        const video = document.createElement('video');
+        video.src = mediaPath;
+        video.controls = true;
+        video.autoplay = true;
+        video.loop = false;
+        video.muted = true; // ✅ muted to allow autoplay
+        video.playsInline = true;
+        video.onended = () => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+        container.appendChild(video);
+        video.play().catch(err => console.warn('Video playback failed:', err));
+      } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+        const audio = document.createElement('audio');
+        audio.src = mediaPath;
+        audio.controls = true;
+        audio.autoplay = true;
+        audio.loop = false;
+        audio.muted = false;
+        audio.onended = () => {
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+        container.appendChild(audio);
+        audio.play().catch(err => console.warn('Audio playback failed:', err));
+      } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext)) {
+        const img = document.createElement('img');
+        img.src = mediaPath;
+        img.onload = () => {
+          setTimeout(() => {
+            currentIndex = (currentIndex + 1) % currentFiles.length;
+            playNext();
+          }, 15000);
+        };
+        img.onerror = () => {
+          console.error('Image failed to load:', mediaPath);
+          currentIndex = (currentIndex + 1) % currentFiles.length;
+          playNext();
+        };
+        container.appendChild(img);
+      } else if (ext === 'pdf') {
+        const iframe = document.createElement('iframe');
+        iframe.src = mediaPath;
+        iframe.onload = () => {
+          setTimeout(() => {
+            currentIndex = (currentIndex + 1) % currentFiles.length;
+            playNext();
+          }, 10000);
+        };
+        container.appendChild(iframe);
+      } else {
+        console.warn('Unsupported file type:', file);
+        currentIndex = (currentIndex + 1) % currentFiles.length;
+        playNext();
+      }
+    }
+  </script>
+</body>
+</html>
